@@ -112,7 +112,7 @@ namespace WaterDemo
 				a.density = sum * ParticleMass * Poly6Kern;
 				a.pressure = (a.density - RestDensity) * InteriorStiffness;
 				float v = Math.Max(0.1f, 0.5f + (a.pressure / 1500.0f));
-				a.color = new Color(new Vector3(v, v, 1.0f));
+				a.color = new Color(new Vector3(1f - v, 1f - v, 1.0f));
 				a.density = 1f / a.density;
 			}
 		}

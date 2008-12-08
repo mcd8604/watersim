@@ -101,26 +101,28 @@ namespace WaterDemo
 		private void InitializeEffect()
 		{
 			basicEffectVertexDeclaration = new VertexDeclaration(
-				graphics.GraphicsDevice, VertexPositionNormalTexture.VertexElements);
+				graphics.GraphicsDevice, VertexPositionColor.VertexElements);
 
 			basicEffect = new BasicEffect(graphics.GraphicsDevice, null);
-			basicEffect.Alpha = 1.0f;
-			basicEffect.DiffuseColor = new Vector3(1.0f, 0.0f, 1.0f);
-			basicEffect.SpecularColor = new Vector3(0.25f, 0.25f, 0.25f);
-			basicEffect.SpecularPower = 5.0f;
-			basicEffect.AmbientLightColor = new Vector3(0.75f, 0.75f, 0.75f);
+			//basicEffect.Alpha = 1.0f;
+			//basicEffect.DiffuseColor = new Vector3(1.0f, 0.0f, 1.0f);
+			//basicEffect.SpecularColor = new Vector3(0.25f, 0.25f, 0.25f);
+			//basicEffect.SpecularPower = 5.0f;
+			basicEffect.AmbientLightColor = new Vector3(1f, 1f, 1f);
 
-			basicEffect.DirectionalLight0.Enabled = true;
-			basicEffect.DirectionalLight0.DiffuseColor = Vector3.One;
-			basicEffect.DirectionalLight0.Direction = Vector3.Normalize(new Vector3(1.0f, -1.0f, -1.0f));
-			basicEffect.DirectionalLight0.SpecularColor = Vector3.One;
+			//basicEffect.DirectionalLight0.Enabled = true;
+			//basicEffect.DirectionalLight0.DiffuseColor = Vector3.One;
+			//basicEffect.DirectionalLight0.Direction = Vector3.Normalize(new Vector3(1.0f, -1.0f, -1.0f));
+			//basicEffect.DirectionalLight0.SpecularColor = Vector3.One;
 
-			basicEffect.DirectionalLight1.Enabled = true;
-			basicEffect.DirectionalLight1.DiffuseColor = new Vector3(0.5f, 0.5f, 0.5f);
-			basicEffect.DirectionalLight1.Direction = Vector3.Normalize(new Vector3(-1.0f, -1.0f, 1.0f));
-			basicEffect.DirectionalLight1.SpecularColor = new Vector3(0.5f, 0.5f, 0.5f);
+			//basicEffect.DirectionalLight1.Enabled = true;
+			//basicEffect.DirectionalLight1.DiffuseColor = new Vector3(0.5f, 0.5f, 0.5f);
+			//basicEffect.DirectionalLight1.Direction = Vector3.Normalize(new Vector3(-1.0f, -1.0f, 1.0f));
+			//basicEffect.DirectionalLight1.SpecularColor = new Vector3(0.5f, 0.5f, 0.5f);
 
 			basicEffect.LightingEnabled = true;
+
+			basicEffect.VertexColorEnabled = true;
 
 			basicEffect.World = worldMatrix;
 			basicEffect.View = viewMatrix;
@@ -210,7 +212,7 @@ namespace WaterDemo
 		{
 			hasdrawn = true;
 
-			graphics.GraphicsDevice.Clear(Color.CornflowerBlue);
+			graphics.GraphicsDevice.Clear(Color.Black);
 
 			// TODO: Add your drawing code here
 			graphics.GraphicsDevice.VertexDeclaration = basicEffectVertexDeclaration;
