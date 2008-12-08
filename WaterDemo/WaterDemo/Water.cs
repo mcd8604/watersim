@@ -21,6 +21,8 @@ namespace WaterDemo
 
 		internal Color color = Color.White;
 
+		internal List<Water> Neighbors = new List<Water>();
+
 		public Water(Vector3 startPosition)
 		{
 			Position = startPosition;

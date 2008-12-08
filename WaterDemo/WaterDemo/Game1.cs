@@ -34,6 +34,7 @@ namespace WaterDemo
 		Vector3 gravity = new Vector3(0f, -1f, 0f);
 
 		bool hasdrawn = false;
+		bool paused = false;
 
 		public Game1()
 		{
@@ -168,6 +169,9 @@ namespace WaterDemo
 			// TODO: Unload any non ContentManager content here
 		}
 
+		private float Time;
+		private int Count;
+
 		/// <summary>
 		/// Allows the game to run logic such as updating the world,
 		/// checking for collisions, gathering input, and playing audio.
@@ -187,10 +191,21 @@ namespace WaterDemo
 				waterbody = new WaterBody();
 			}
 
-			if (hasdrawn)
+			if (keyboard.IsKeyDown(Keys.P))
+			{
+				paused = true;
+			}
+
+			if (keyboard.IsKeyDown(Keys.R))
+			{
+				paused = false;
+			}
+
+			if (hasdrawn && !paused)
 			{
 				waterbody.Update();
 				hasdrawn = false;
+				Count++;
 			}
 
 
@@ -205,6 +220,15 @@ namespace WaterDemo
 			);
 
 			vertexBuffer.SetData<VertexPositionColor>(waterPoints);
+
+			Time += (float)gameTime.ElapsedGameTime.TotalSeconds;
+
+			if (Time > 1f)
+			{
+				Console.WriteLine(Count);
+				Count = 0;
+				Time -= 1f;
+			}
 
 			base.Update(gameTime);
 		}
