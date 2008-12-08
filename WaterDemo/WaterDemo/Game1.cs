@@ -27,7 +27,7 @@ namespace WaterDemo
 		VertexPositionColor[] waterPoints;
 		VertexDeclaration basicEffectVertexDeclaration;
 		VertexBuffer vertexBuffer;
-		BasicEffect basicEffect;
+        Effect effect;
 
 		WaterBody waterbody;
 
@@ -100,7 +100,16 @@ namespace WaterDemo
 		/// </summary>
 		private void InitializeEffect()
 		{
-			basicEffectVertexDeclaration = new VertexDeclaration(
+            effect = Content.Load<Effect>("effect");
+
+            basicEffectVertexDeclaration = new VertexDeclaration(
+                            graphics.GraphicsDevice, VertexPositionColor.VertexElements);
+
+            effect.Parameters["world"].SetValue(worldMatrix);
+            effect.Parameters["view"].SetValue(viewMatrix);
+            effect.Parameters["projection"].SetValue(projectionMatrix);
+
+			/*basicEffectVertexDeclaration = new VertexDeclaration(
 				graphics.GraphicsDevice, VertexPositionColor.VertexElements);
 
 			basicEffect = new BasicEffect(graphics.GraphicsDevice, null);
@@ -126,7 +135,7 @@ namespace WaterDemo
 
 			basicEffect.World = worldMatrix;
 			basicEffect.View = viewMatrix;
-			basicEffect.Projection = projectionMatrix;
+			basicEffect.Projection = projectionMatrix;*/
 		}
 
 		/// <summary>
@@ -218,8 +227,8 @@ namespace WaterDemo
 			graphics.GraphicsDevice.VertexDeclaration = basicEffectVertexDeclaration;
 			graphics.GraphicsDevice.Vertices[0].SetSource(vertexBuffer, 0, VertexPositionColor.SizeInBytes);
 
-			basicEffect.Begin();
-			foreach (EffectPass pass in basicEffect.CurrentTechnique.Passes)
+			effect.Begin();
+            foreach (EffectPass pass in effect.CurrentTechnique.Passes)
 			{
 				pass.Begin();
 
@@ -227,7 +236,7 @@ namespace WaterDemo
 
 				pass.End();
 			}
-			basicEffect.End();
+            effect.End();
 
 			base.Draw(gameTime);
 		}
