@@ -51,7 +51,8 @@ namespace WaterDemo
 			Spawn();
 		}
 
-		private void CalcKernels(){
+		private void CalcKernels()
+		{
 			ParticleDistance = (float)Math.Pow(ParticleMass / RestDensity, 1 / 3f);
 			R2 = SmoothRadius * SmoothRadius;
 			Poly6Kern = 315f / (64f * MathHelper.Pi * (float)Math.Pow(SmoothRadius, 9));
@@ -85,16 +86,17 @@ namespace WaterDemo
 
 		public void Update()
 		{
+			findNeighbors();
 			doPressure();
 			doForces();
 			doStuff();
 		}
 
-		private void doPressure()
+		private void findNeighbors()
 		{
 			foreach (Water a in water)
 			{
-				float sum = 0;
+				a.Neighbors.Clear();
 				foreach (Water b in water)
 				{
 					if (a == b) { continue; }
@@ -104,9 +106,26 @@ namespace WaterDemo
 					float dsq = (dx * dx + dy * dy + dz * dz);
 					if (R2 > dsq)
 					{
-						float diff = R2 - dsq;
-						sum += diff * diff * diff;
+						a.Neighbors.Add(b);
 					}
+				}
+			}
+		}
+
+		private void doPressure()
+		{
+			foreach (Water a in water)
+			{
+				float sum = 0;
+				foreach (Water b in a.Neighbors)
+				{
+					float dx = (a.Position.X - b.Position.X) * SimScale;
+					float dy = (a.Position.Y - b.Position.Y) * SimScale;
+					float dz = (a.Position.Z - b.Position.Z) * SimScale;
+					float dsq = (dx * dx + dy * dy + dz * dz);
+
+					float diff = R2 - dsq;
+					sum += diff * diff * diff;
 				}
 
 				a.density = sum * ParticleMass * Poly6Kern;
@@ -121,28 +140,25 @@ namespace WaterDemo
 		{
 			foreach (Water a in water)
 			{
-				float sum = 0;
 				Vector3 force = Vector3.Zero;
-				foreach (Water b in water)
+				foreach (Water b in a.Neighbors)
 				{
-					if (a == b) { continue; }
 					float dx = (a.Position.X - b.Position.X) * SimScale;
 					float dy = (a.Position.Y - b.Position.Y) * SimScale;
 					float dz = (a.Position.Z - b.Position.Z) * SimScale;
 					float dsq = (dx * dx + dy * dy + dz * dz);
-					if (R2 > dsq)
-					{
-						float r = (float)Math.Sqrt(dsq);
-						float c = SmoothRadius - r;
-						float pt = -0.5f * c * SpikyKern * (a.pressure + b.pressure) / r;
-						float vt = LapKern * Viscosity;
-						Vector3 currentForce;
-						currentForce.X = pt * dx + vt * (b.VelocityEval.X - a.VelocityEval.X);
-						currentForce.Y = pt * dy + vt * (b.VelocityEval.Y - a.VelocityEval.Y);
-						currentForce.Z = pt * dz + vt * (b.VelocityEval.Z - a.VelocityEval.Z);
-						currentForce *= c * a.density * b.density;
-						force += currentForce;
-					}
+
+					float r = (float)Math.Sqrt(dsq);
+					float c = SmoothRadius - r;
+					float pt = -0.5f * c * SpikyKern * (a.pressure + b.pressure) / r;
+					float vt = LapKern * Viscosity;
+					Vector3 currentForce;
+					currentForce.X = pt * dx + vt * (b.VelocityEval.X - a.VelocityEval.X);
+					currentForce.Y = pt * dy + vt * (b.VelocityEval.Y - a.VelocityEval.Y);
+					currentForce.Z = pt * dz + vt * (b.VelocityEval.Z - a.VelocityEval.Z);
+					currentForce *= c * a.density * b.density;
+					force += currentForce;
+
 				}
 				a.Force = force;
 			}
