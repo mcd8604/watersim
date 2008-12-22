@@ -34,7 +34,8 @@ namespace WaterPolygonizerDemo
         BasicEffect effect;
 
         Vector3 camPosition = new Vector3(75, 25, 75);
-        Vector3 camTarget = Vector3.Zero;
+        Vector3 camTarget = new Vector3(25, 0, 25);
+        Quaternion camRotation = Quaternion.Identity;
 
         Matrix world;
         Matrix view;
@@ -119,11 +120,12 @@ namespace WaterPolygonizerDemo
 
             effect.EnableDefaultLighting();
 
-            effect.AmbientLightColor = Color.Gray.ToVector3();
+            effect.AmbientLightColor = new Vector3(0.0f, 0.0f, 0.2f);
 
             effect.DirectionalLight0.Enabled = true;
-            effect.DirectionalLight0.DiffuseColor = Color.White.ToVector3();
-            effect.DirectionalLight0.Direction = Vector3.Normalize(new Vector3(-1, -1, -1));
+            effect.DirectionalLight0.DiffuseColor = new Vector3(0.25f, .25f, .25f);
+            effect.DirectionalLight0.Direction = Vector3.Normalize(new Vector3(-1, 2, 1));
+            effect.DirectionalLight0.SpecularColor = new Vector3(0.75f, 0.75f, 75f);
 
         }
 
@@ -139,6 +141,10 @@ namespace WaterPolygonizerDemo
         private float Time;
         private int Count;
 
+        MouseState lastState = Mouse.GetState();
+        MouseState curState;
+        float rotation;
+
         /// <summary>
         /// Allows the game to run logic such as updating the world,
         /// checking for collisions, gathering input, and playing audio.
@@ -150,7 +156,23 @@ namespace WaterPolygonizerDemo
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed)
                 this.Exit();
 
-            // TODO: Add your update logic here
+            // TODO: Add your update logic here           
+
+            curState = Mouse.GetState();
+
+            if (curState.LeftButton == ButtonState.Pressed)
+            {
+                // Update camera rotation
+                rotation += (curState.X - lastState.X) / (float)GraphicsDevice.Viewport.Width * MathHelper.TwoPi;
+                float y = (curState.Y - lastState.Y) / (float)GraphicsDevice.Viewport.Height * MathHelper.TwoPi;
+                //camRotation = Quaternion.CreateFromYawPitchRoll(x, y, 0);
+                camRotation = Quaternion.CreateFromAxisAngle(Vector3.UnitY, rotation);
+                view = Matrix.CreateLookAt(Vector3.Transform(camPosition, camRotation), camTarget, Vector3.Up);
+                effect.View = view;
+            }
+
+            lastState = curState;
+
             KeyboardState keyboard = Keyboard.GetState();
 
             if (keyboard.IsKeyDown(Keys.Escape))
