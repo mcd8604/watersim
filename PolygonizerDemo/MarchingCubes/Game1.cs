@@ -16,8 +16,8 @@ namespace MarchingCubes
     /// </summary>
     public class Game1 : Microsoft.Xna.Framework.Game
     {
-        const int NUM_POINTS = 10;
-        const float POINT_VAL = .5f / NUM_POINTS;
+        const int NUM_POINTS = 20;
+        const float POINT_VAL = 1f / NUM_POINTS;
         const float RANGE = 1f;
         const float GRID_SIZE = RANGE / 64;
         const float ISOVALUE = 2f;
@@ -661,7 +661,7 @@ namespace MarchingCubes
             }
 
             // Average the normals
-            List<VertexPositionNormalTexture> averagedVertexList = new List<VertexPositionNormalTexture>();
+            /*List<VertexPositionNormalTexture> averagedVertexList = new List<VertexPositionNormalTexture>();
             for(int i = 0; i < vertexList.Count; ++i)
             {
                 VertexPositionNormalTexture v = vertexList[i];
@@ -675,9 +675,9 @@ namespace MarchingCubes
                 }
                 avgNormal.Normalize();
                 averagedVertexList.Add(new VertexPositionNormalTexture(v.Position, avgNormal, v.TextureCoordinate));
-            }
+            }*/
 
-            vertices = averagedVertexList.ToArray();
+            vertices = vertexList.ToArray();
         }
 
         /// <summary>
