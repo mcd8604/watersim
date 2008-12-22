@@ -16,8 +16,8 @@ namespace MarchingCubes
     /// </summary>
     public class Game1 : Microsoft.Xna.Framework.Game
     {
-        const int NUM_POINTS = 20;
-        const float POINT_VAL = 1f / NUM_POINTS;
+        const int NUM_POINTS = 10;
+        const float POINT_VAL = .5f / NUM_POINTS;
         const float RANGE = 1f;
         const float GRID_SIZE = RANGE / 64;
         const float ISOVALUE = 2f;
@@ -649,7 +649,7 @@ namespace MarchingCubes
                                 Vector3 triVector1 = intersections[triTable[cubeindex, i]];
                                 Vector3 triVector2 = intersections[triTable[cubeindex, i + 1]];
                                 Vector3 triVector3 = intersections[triTable[cubeindex, i + 2]];
-                                Vector3 normal = new Plane(triVector1, triVector1, triVector3).Normal;
+                                Vector3 normal = new Plane(triVector1, triVector2, triVector3).Normal;
                                 normal.Normalize();
                                 vertexList.Add(new VertexPositionNormalTexture(triVector1, normal, Vector2.Zero));
                                 vertexList.Add(new VertexPositionNormalTexture(triVector2, normal, Vector2.Zero));
@@ -660,13 +660,24 @@ namespace MarchingCubes
                 }
             }
 
-            /*vertices = new VertexPositionColor[vectors.Count];
-            for (int i = 0; i < vertices.Length; ++i)
+            // Average the normals
+            List<VertexPositionNormalTexture> averagedVertexList = new List<VertexPositionNormalTexture>();
+            for(int i = 0; i < vertexList.Count; ++i)
             {
-                vertices[i] = new VertexPositionColor(vectors[i], Color.White);
-            }*/
+                VertexPositionNormalTexture v = vertexList[i];
+                Vector3 avgNormal = Vector3.Zero;
+                foreach (VertexPositionNormalTexture n in vertexList)
+                {
+                    if (v.Position.Equals(n.Position))
+                    {
+                        avgNormal += n.Normal;
+                    }
+                }
+                avgNormal.Normalize();
+                averagedVertexList.Add(new VertexPositionNormalTexture(v.Position, avgNormal, v.TextureCoordinate));
+            }
 
-            vertices = vertexList.ToArray();
+            vertices = averagedVertexList.ToArray();
         }
 
         /// <summary>
@@ -695,7 +706,7 @@ namespace MarchingCubes
 
             // TODO: use this.Content to load your game content here
             GraphicsDevice.RenderState.PointSize = 5f;
-            GraphicsDevice.VertexDeclaration = new VertexDeclaration(GraphicsDevice, VertexPositionColor.VertexElements);
+            GraphicsDevice.VertexDeclaration = new VertexDeclaration(GraphicsDevice, VertexPositionNormalTexture.VertexElements);
 
             world = Matrix.Identity;
             view = Matrix.CreateLookAt(camPosition, camTarget, Vector3.Up);
@@ -712,10 +723,14 @@ namespace MarchingCubes
             effect.View = view;
             effect.Projection = projection;
 
-            effect.DirectionalLight0.Enabled = true;
-            
-
             effect.EnableDefaultLighting();
+
+            effect.AmbientLightColor = Color.Gray.ToVector3();
+
+            effect.DirectionalLight0.Enabled = true;
+            effect.DirectionalLight0.DiffuseColor = Color.White.ToVector3();
+            effect.DirectionalLight0.Direction = Vector3.Normalize(Vector3.One);
+
         }
 
         /// <summary>
