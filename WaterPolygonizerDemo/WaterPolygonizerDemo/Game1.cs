@@ -33,7 +33,7 @@ namespace WaterPolygonizerDemo
 
         BasicEffect effect;
 
-        Vector3 camPosition = new Vector3(40, 30, 20);
+        Vector3 camPosition = new Vector3(75, 25, 75);
         Vector3 camTarget = Vector3.Zero;
 
         Matrix world;
@@ -123,7 +123,7 @@ namespace WaterPolygonizerDemo
 
             effect.DirectionalLight0.Enabled = true;
             effect.DirectionalLight0.DiffuseColor = Color.White.ToVector3();
-            effect.DirectionalLight0.Direction = Vector3.Normalize(Vector3.One);
+            effect.DirectionalLight0.Direction = Vector3.Normalize(new Vector3(-1, -1, -1));
 
         }
 

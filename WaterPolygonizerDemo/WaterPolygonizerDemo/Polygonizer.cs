@@ -8,9 +8,9 @@ namespace WaterPolygonizerDemo
 {
     class Polygonizer
     {
-        public const float RANGE = 20;
-        private const float GRID_SIZE = RANGE / 16;
-        private const float ISOLEVEL = 0.2f;
+        public const float RANGE = 50;
+        private const float GRID_SIZE = RANGE / 24;
+        private const float ISOLEVEL = 0.075f;
         private const int GRID_DIMENSION = (int)(RANGE / GRID_SIZE);
 
         private float pointVal;
