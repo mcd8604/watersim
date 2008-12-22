@@ -16,10 +16,10 @@ namespace MarchingCubes
     /// </summary>
     public class Game1 : Microsoft.Xna.Framework.Game
     {
-        const int NUM_POINTS = 100;
+        const int NUM_POINTS = 50;
         const float POINT_VAL = 1f / NUM_POINTS;
         const float RANGE = 1f;
-        const float GRID_SIZE = RANGE / 64;
+        const float GRID_SIZE = RANGE / 128;
         const float ISOVALUE = 2.25f;
         const int GRID_DIMENSION = (int)(RANGE / GRID_SIZE);
 
@@ -725,10 +725,10 @@ namespace MarchingCubes
 
             effect.EnableDefaultLighting();
 
-            effect.AmbientLightColor = Color.Gray.ToVector3();
+            effect.AmbientLightColor = new Vector3(.2f, .2f, .2f);
 
             effect.DirectionalLight0.Enabled = true;
-            effect.DirectionalLight0.DiffuseColor = Color.White.ToVector3();
+            effect.DirectionalLight0.DiffuseColor = new Vector3(.5f, .5f, .5f);
             effect.DirectionalLight0.Direction = Vector3.Normalize(Vector3.One);
 
         }
@@ -742,8 +742,12 @@ namespace MarchingCubes
             // TODO: Unload any non ContentManager content here
         }
 
-        MouseState lastState = Mouse.GetState();
-        MouseState curState;
+        MouseState lastMouseState = Mouse.GetState();
+        MouseState curMouseState;
+
+        KeyboardState lastKeyState = Keyboard.GetState();
+        KeyboardState curKeyState;
+
         float rotation;
 
         /// <summary>
@@ -759,20 +763,32 @@ namespace MarchingCubes
 
             // TODO: Add your update logic here
 
-            curState = Mouse.GetState();
+            curMouseState = Mouse.GetState();
 
-            if (curState.LeftButton == ButtonState.Pressed)
+            if (curMouseState.LeftButton == ButtonState.Pressed)
             {
                 // Update camera rotation
-                rotation += (curState.X - lastState.X) / (float)GraphicsDevice.Viewport.Width * MathHelper.TwoPi;
-                float y = (curState.Y - lastState.Y) / (float)GraphicsDevice.Viewport.Height * MathHelper.TwoPi;
+                rotation += (curMouseState.X - lastMouseState.X) / (float)GraphicsDevice.Viewport.Width * MathHelper.TwoPi;
+                float y = (curMouseState.Y - lastMouseState.Y) / (float)GraphicsDevice.Viewport.Height * MathHelper.TwoPi;
                 //camRotation = Quaternion.CreateFromYawPitchRoll(x, y, 0);
                 camRotation = Quaternion.CreateFromAxisAngle(Vector3.UnitY, rotation);
                 view = Matrix.CreateLookAt(Vector3.Transform(camPosition, camRotation), camTarget, Vector3.Up);
                 effect.View = view;
             }
 
-            lastState = curState;
+            lastMouseState = curMouseState;
+
+            curKeyState = Keyboard.GetState();
+
+            if (curKeyState.IsKeyDown(Keys.Space) && lastKeyState.IsKeyUp(Keys.Space))
+            {
+                generateVertices();
+                initGrid();
+                populateGrid();
+                Polygonise(ISOVALUE);
+            }
+
+            lastKeyState = curKeyState;
 
             base.Update(gameTime);
         }
