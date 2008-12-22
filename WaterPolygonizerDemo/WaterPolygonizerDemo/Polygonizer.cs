@@ -1,82 +1,32 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
+using System.Text;
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Audio;
-using Microsoft.Xna.Framework.Content;
-using Microsoft.Xna.Framework.GamerServices;
 using Microsoft.Xna.Framework.Graphics;
-using Microsoft.Xna.Framework.Input;
-using Microsoft.Xna.Framework.Net;
-using Microsoft.Xna.Framework.Storage;
 
-namespace MarchingCubes
+namespace WaterPolygonizerDemo
 {
-    /// <summary>
-    /// This is the main type for your game
-    /// </summary>
-    public class Game1 : Microsoft.Xna.Framework.Game
+    class Polygonizer
     {
-        const int NUM_POINTS = 100;
-        const float POINT_VAL = 1f / NUM_POINTS;
-        const float RANGE = 1f;
-        const float GRID_SIZE = RANGE / 64;
-        const float ISOVALUE = 2.25f;
-        const int GRID_DIMENSION = (int)(RANGE / GRID_SIZE);
+        public const float RANGE = 20;
+        private const float GRID_SIZE = RANGE / 16;
+        private const float ISOLEVEL = 0.2f;
+        private const int GRID_DIMENSION = (int)(RANGE / GRID_SIZE);
 
-        GraphicsDeviceManager graphics;
-        SpriteBatch spriteBatch;
+        private float pointVal;
 
-        List<Vector3> points;
-        VertexPositionColor[] primitivePoints;
+        private Vector3[, ,] gridPoints;
+        private float[, ,] gridValues;
 
-        Vector3[, ,] gridPoints;
-        float[, ,] gridValues;
-
-        BasicEffect effect;
-
-        Vector3 camPosition = new Vector3(RANGE, RANGE, RANGE);
-        Vector3 camTarget = new Vector3(RANGE / 2, RANGE / 2, RANGE / 2);
-        Quaternion camRotation = Quaternion.Identity;
-
-        Matrix world;
-        Matrix view;
-        Matrix projection;
-
-        public Game1()
+        private VertexPositionNormalTexture[] vertices = new VertexPositionNormalTexture[0];
+        public VertexPositionNormalTexture[] Vertices
         {
-            graphics = new GraphicsDeviceManager(this);
-            Content.RootDirectory = "Content";
+            get { return vertices; }
         }
 
-        /// <summary>
-        /// Allows the game to perform any initialization it needs to before starting to run.
-        /// This is where it can query for any required services and load any non-graphic
-        /// related content.  Calling base.Initialize will enumerate through any components
-        /// and initialize them as well.
-        /// </summary>
-        protected override void Initialize()
+        public Polygonizer()
         {
-            // TODO: Add your initialization logic here
-            generateVertices();
             initGrid();
-            populateGrid();
-            Polygonise(ISOVALUE);
-            base.Initialize();
-        }
-
-        private void generateVertices()
-        {
-            points = new List<Vector3>();
-            primitivePoints = new VertexPositionColor[NUM_POINTS];
-            Random r = new Random();
-            for (int i = 0; i < NUM_POINTS; i++)
-            {
-                float x = (float)r.NextDouble() * RANGE;
-                float y = (float)r.NextDouble() * RANGE;
-                float z = (float)r.NextDouble() * RANGE;
-                points.Add(new Vector3(x, y, z));
-                primitivePoints[i] = new VertexPositionColor(points[i], Color.White);
-            }
         }
 
         private void initGrid()
@@ -96,8 +46,10 @@ namespace MarchingCubes
             }
         }
 
-        private void populateGrid()
+        private void updateGrid(Water[] water)
         {
+            pointVal = 1f / water.Length;
+
             for (int x = 0; x < GRID_DIMENSION; ++x)
             {
                 for (int y = 0; y < GRID_DIMENSION; ++y)
@@ -105,130 +57,15 @@ namespace MarchingCubes
                     for (int z = 0; z < GRID_DIMENSION; ++z)
                     {
                         float value = 0f;
-                        foreach (Vector3 point in points)
+                        foreach (Water w in water)
                         {
-                            value += POINT_VAL / Vector3.Distance(gridPoints[x, y, z], point);
+                            value += pointVal / Vector3.Distance(gridPoints[x, y, z], w.Position);
                         }
                         gridValues[x, y, z] = value;
                     }
                 }
             }
         }
-
-        VertexPositionNormalTexture[] vertices;
-
-        //#region Tetra code
-
-        //private void polygonize(float isolevel)
-        //{
-        //    List<Vector4> triangleVertices = new List<Vector4>();
-
-        //    for (int x = 0; x < GRID_DIMENSION - 1; ++x)
-        //    {
-        //        for (int y = 0; y < GRID_DIMENSION - 1; ++y)
-        //        {
-        //            for (int z = 0; z < GRID_DIMENSION - 1; ++z)
-        //            {
-        //                // Tetrahedron 1
-        //                Vector4 v1 = grid[x, y, z];
-        //                Vector4 v2 = grid[x + 1, y + 1, z];
-        //                Vector4 v3 = grid[x, y + 1, z];
-        //                Vector4 v4 = grid[x, y, z + 1];
-
-        //                polygonizeTetra(isolevel, triangleVertices, ref v1, ref v2, ref v3, ref v4);
-
-        //                // Tetrahedron 2
-        //                v1 = grid[x, y, z];
-        //                v2 = grid[x + 1, y, z];
-        //                v3 = grid[x + 1, y + 1, z];
-        //                v4 = grid[x, y, z + 1];
-
-        //                polygonizeTetra(isolevel, triangleVertices, ref v1, ref v2, ref v3, ref v4);
-        //            }
-        //        }
-        //    }
-
-        //    vertices = new VertexPositionColor[triangleVertices.Count];
-        //    for (int i = 0; i < vertices.Length; ++i)
-        //    {
-        //        Vector4 vertex = triangleVertices[i];
-        //        vertices[i] = new VertexPositionColor(new Vector3(vertex.X, vertex.Y, vertex.Z), Color.White);
-        //    }
-        //}
-
-        //private static void polygonizeTetra(float isolevel, List<Vector4> triangleVertices, ref Vector4 v1, ref Vector4 v2, ref Vector4 v3, ref Vector4 v4)
-        //{
-        //    #region Single Point
-
-        //    if (v1.W > isolevel &&
-        //        v2.W < isolevel &&
-        //        v3.W < isolevel &&
-        //        v4.W < isolevel)
-        //    {
-        //        triangleVertices.Add(Vector4.Lerp(v4, v1, 0.5f));
-        //        triangleVertices.Add(Vector4.Lerp(v3, v1, 0.5f));
-        //        triangleVertices.Add(Vector4.Lerp(v2, v1, 0.5f));
-        //    }
-
-        //    else if (
-        //        v1.W < isolevel &&
-        //        v2.W > isolevel &&
-        //        v3.W < isolevel &&
-        //        v4.W < isolevel)
-        //    {
-        //        triangleVertices.Add(Vector4.Lerp(v4, v2, 0.5f));
-        //        triangleVertices.Add(Vector4.Lerp(v3, v2, 0.5f));
-        //        triangleVertices.Add(Vector4.Lerp(v1, v2, 0.5f));
-        //    }
-
-        //    else if (
-        //        v1.W < isolevel &&
-        //        v2.W < isolevel &&
-        //        v3.W > isolevel &&
-        //        v4.W < isolevel)
-        //    {
-        //        triangleVertices.Add(Vector4.Lerp(v4, v3, 0.5f));
-        //        triangleVertices.Add(Vector4.Lerp(v2, v3, 0.5f));
-        //        triangleVertices.Add(Vector4.Lerp(v1, v3, 0.5f));
-        //    }
-
-        //    else if (
-        //        v1.W < isolevel &&
-        //        v2.W < isolevel &&
-        //        v3.W < isolevel &&
-        //        v4.W > isolevel)
-        //    {
-        //        triangleVertices.Add(Vector4.Lerp(v3, v4, 0.5f));
-        //        triangleVertices.Add(Vector4.Lerp(v2, v4, 0.5f));
-        //        triangleVertices.Add(Vector4.Lerp(v1, v4, 0.5f));
-        //    }
-
-        //    #endregion
-
-        //    #region Dual Point
-
-        //    if ((v1.W > isolevel &&
-        //        v2.W > isolevel &&
-        //        v3.W < isolevel &&
-        //        v4.W < isolevel) ||
-        //        (v1.W < isolevel &&
-        //        v2.W < isolevel &&
-        //        v3.W > isolevel &&
-        //        v4.W > isolevel))
-        //    {
-        //        triangleVertices.Add(Vector4.Lerp(v4, v1, 0.5f));
-        //        triangleVertices.Add(Vector4.Lerp(v3, v1, 0.5f));
-        //        triangleVertices.Add(Vector4.Lerp(v4, v2, 0.5f));
-
-        //        triangleVertices.Add(Vector4.Lerp(v3, v1, 0.5f));
-        //        triangleVertices.Add(Vector4.Lerp(v3, v2, 0.5f));
-        //        triangleVertices.Add(Vector4.Lerp(v4, v2, 0.5f));
-        //    }
-
-        //    #endregion
-        //}
-
-        //#endregion
 
         #region Tables
 
@@ -695,119 +532,11 @@ namespace MarchingCubes
             return Vector3.Lerp(v1, v2, (isolevel - v1Value) / (v2Value - v1Value));
         }
 
-        /// <summary>
-        /// LoadContent will be called once per game and is the place to load
-        /// all of your content.
-        /// </summary>
-        protected override void LoadContent()
+        internal void Update(Water[] water)
         {
-            // Create a new SpriteBatch, which can be used to draw textures.
-            spriteBatch = new SpriteBatch(GraphicsDevice);
-
-            // TODO: use this.Content to load your game content here
-            GraphicsDevice.RenderState.PointSize = 5f;
-            GraphicsDevice.VertexDeclaration = new VertexDeclaration(GraphicsDevice, VertexPositionNormalTexture.VertexElements);
-
-            world = Matrix.Identity;
-            view = Matrix.CreateLookAt(camPosition, camTarget, Vector3.Up);
-            projection = Matrix.CreatePerspectiveFieldOfView(MathHelper.PiOver4, GraphicsDevice.Viewport.AspectRatio, 0.001f, 4 * RANGE);
-
-            initEffect();
+            updateGrid(water);
+            Polygonise(ISOLEVEL);
         }
 
-        private void initEffect()
-        {
-            effect = new BasicEffect(GraphicsDevice, new EffectPool());
-
-            effect.World = world;
-            effect.View = view;
-            effect.Projection = projection;
-
-            effect.EnableDefaultLighting();
-
-            effect.AmbientLightColor = Color.Gray.ToVector3();
-
-            effect.DirectionalLight0.Enabled = true;
-            effect.DirectionalLight0.DiffuseColor = Color.White.ToVector3();
-            effect.DirectionalLight0.Direction = Vector3.Normalize(Vector3.One);
-
-        }
-
-        /// <summary>
-        /// UnloadContent will be called once per game and is the place to unload
-        /// all content.
-        /// </summary>
-        protected override void UnloadContent()
-        {
-            // TODO: Unload any non ContentManager content here
-        }
-
-        MouseState lastState = Mouse.GetState();
-        MouseState curState;
-        float rotation;
-
-        /// <summary>
-        /// Allows the game to run logic such as updating the world,
-        /// checking for collisions, gathering input, and playing audio.
-        /// </summary>
-        /// <param name="gameTime">Provides a snapshot of timing values.</param>
-        protected override void Update(GameTime gameTime)
-        {
-            // Allows the game to exit
-            if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed)
-                this.Exit();
-
-            // TODO: Add your update logic here
-
-            curState = Mouse.GetState();
-
-            if (curState.LeftButton == ButtonState.Pressed)
-            {
-                // Update camera rotation
-                rotation += (curState.X - lastState.X) / (float)GraphicsDevice.Viewport.Width * MathHelper.TwoPi;
-                float y = (curState.Y - lastState.Y) / (float)GraphicsDevice.Viewport.Height * MathHelper.TwoPi;
-                //camRotation = Quaternion.CreateFromYawPitchRoll(x, y, 0);
-                camRotation = Quaternion.CreateFromAxisAngle(Vector3.UnitY, rotation);
-                view = Matrix.CreateLookAt(Vector3.Transform(camPosition, camRotation), camTarget, Vector3.Up);
-                effect.View = view;
-            }
-
-            lastState = curState;
-
-            base.Update(gameTime);
-        }
-
-        /// <summary>
-        /// This is called when the game should draw itself.
-        /// </summary>
-        /// <param name="gameTime">Provides a snapshot of timing values.</param>
-        protected override void Draw(GameTime gameTime)
-        {
-            graphics.GraphicsDevice.Clear(Color.CornflowerBlue);
-
-            // TODO: Add your drawing code here
-            effect.Begin();
-            foreach (EffectPass pass in effect.CurrentTechnique.Passes)
-            {
-                pass.Begin();
-                GraphicsDevice.DrawUserPrimitives<VertexPositionColor>(PrimitiveType.PointList, primitivePoints, 0, primitivePoints.Length);
-                pass.End();
-            }
-            effect.End();
-
-            if (vertices.Length > 0)
-            {
-                effect.Begin();
-                foreach (EffectPass pass in effect.CurrentTechnique.Passes)
-                {
-                    pass.Begin();
-                    GraphicsDevice.DrawUserPrimitives<VertexPositionNormalTexture>(PrimitiveType.TriangleList, vertices, 0, vertices.Length / 3);
-                    pass.End();
-                }
-                effect.End();
-            }
-
-            base.Draw(gameTime);
-        }
     }
 }
