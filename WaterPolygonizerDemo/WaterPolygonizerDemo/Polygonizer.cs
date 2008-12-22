@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using System.Diagnostics;
 
 namespace WaterPolygonizerDemo
 {
@@ -531,11 +532,39 @@ namespace WaterPolygonizerDemo
         {
             return Vector3.Lerp(v1, v2, (isolevel - v1Value) / (v2Value - v1Value));
         }
+        
+
+        private double gridTime;
+        public double GridTime
+        {
+            get { return gridTime; }
+        }
+
+        private double polyTime;
+        public double PolyTime
+        {
+            get { return polyTime; }
+        }
+
+        Stopwatch sw = new Stopwatch();
 
         internal void Update(Water[] water)
         {
+            sw.Start();
+
             updateGrid(water);
+
+            sw.Stop();
+            gridTime = sw.Elapsed.TotalSeconds;
+            sw.Reset();
+
+            sw.Start();
+
             Polygonise(ISOLEVEL);
+
+            sw.Stop();
+            polyTime = sw.Elapsed.TotalSeconds;
+            sw.Reset();
         }
 
     }
