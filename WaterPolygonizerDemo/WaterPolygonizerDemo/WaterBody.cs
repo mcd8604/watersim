@@ -30,11 +30,11 @@ namespace WaterPolygonizerDemo
 		float SpikyKern;
 		float LapKern;
 
-		Vector3 Min = new Vector3(5f, 0f, 5f);
-		Vector3 Max = new Vector3(15f, 20f, 15f);
+		Vector3 Min = new Vector3(5f, 5f, 5f);
+        Vector3 Max = new Vector3(45f, 80f, 45f);
 
-		Vector3 InitMin = new Vector3(-12f, 0f, -12f);
-		Vector3 InitMax = new Vector3(-4f, 20f, -8f);
+		Vector3 InitMin = new Vector3(18f, 20f, 18f);
+        Vector3 InitMax = new Vector3(20f, 50f, 20f);
 
 		//Vector3 Min = new Vector3(-25f, 0f, -25f);
 		//Vector3 Max = new Vector3(25f, 100f, 25f);
