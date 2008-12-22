@@ -8,6 +8,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Microsoft.Xna.Framework.Net;
 using Microsoft.Xna.Framework.Storage;
+using System.Diagnostics;
 
 namespace WaterPolygonizerDemo
 {
@@ -40,6 +41,8 @@ namespace WaterPolygonizerDemo
         Matrix world;
         Matrix view;
         Matrix projection;
+
+        SpriteFont font;
 
         public Game1()
         {
@@ -101,6 +104,8 @@ namespace WaterPolygonizerDemo
             InitializeMatrices();
             InitializeEffect();
             InitializeVertices();
+
+            font = Content.Load<SpriteFont>("font");
         }
 
         private void InitializeMatrices()
@@ -264,6 +269,10 @@ namespace WaterPolygonizerDemo
                 effect.End();
             }
 
+            spriteBatch.Begin();
+            spriteBatch.DrawString(font, "Grid Time: " + polygonizer.GridTime, Vector2.Zero, Color.White);
+            spriteBatch.DrawString(font, "Poly Time: " + polygonizer.GridTime, new Vector2(0, 24), Color.White);
+            spriteBatch.End();
 
             base.Draw(gameTime);
         }
