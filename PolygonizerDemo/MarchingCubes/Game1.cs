@@ -16,8 +16,8 @@ namespace MarchingCubes
     /// </summary>
     public class Game1 : Microsoft.Xna.Framework.Game
     {
-        const int NUM_POINTS = 10;
-        const float POINT_VAL = .5f / NUM_POINTS;
+        const int NUM_POINTS = 20;
+        const float POINT_VAL = 1f / NUM_POINTS;
         const float RANGE = 1f;
         const float GRID_SIZE = RANGE / 64;
         const float ISOVALUE = 2f;
@@ -115,7 +115,7 @@ namespace MarchingCubes
             }
         }
 
-        VertexPositionColor[] vertices;
+        VertexPositionNormalTexture[] vertices;
 
         //#region Tetra code
 
@@ -549,7 +549,7 @@ namespace MarchingCubes
         /// <param name="isolevel"></param>
         void Polygonise(float isolevel)
         {
-            List<Vector3> vectors = new List<Vector3>();
+            List<VertexPositionNormalTexture> vertexList = new List<VertexPositionNormalTexture>();
 
             for (int x = 0; x < GRID_DIMENSION - 1; ++x)
             {
@@ -646,20 +646,27 @@ namespace MarchingCubes
                             // Create the triangle
                             for (int i = 0; triTable[cubeindex, i] != -1; i += 3)
                             {
-                                vectors.Add(intersections[triTable[cubeindex, i]]);
-                                vectors.Add(intersections[triTable[cubeindex, i + 1]]);
-                                vectors.Add(intersections[triTable[cubeindex, i + 2]]);
+                                Vector3 triVector1 = intersections[triTable[cubeindex, i]];
+                                Vector3 triVector2 = intersections[triTable[cubeindex, i + 1]];
+                                Vector3 triVector3 = intersections[triTable[cubeindex, i + 2]];
+                                Vector3 normal = new Plane(triVector1, triVector1, triVector3).Normal;
+                                normal.Normalize();
+                                vertexList.Add(new VertexPositionNormalTexture(triVector1, normal, Vector2.Zero));
+                                vertexList.Add(new VertexPositionNormalTexture(triVector2, normal, Vector2.Zero));
+                                vertexList.Add(new VertexPositionNormalTexture(triVector3, normal, Vector2.Zero));
                             }
                         }
                     }
                 }
             }
 
-            vertices = new VertexPositionColor[vectors.Count];
+            /*vertices = new VertexPositionColor[vectors.Count];
             for (int i = 0; i < vertices.Length; ++i)
             {
                 vertices[i] = new VertexPositionColor(vectors[i], Color.White);
-            }
+            }*/
+
+            vertices = vertexList.ToArray();
         }
 
         /// <summary>
@@ -704,6 +711,9 @@ namespace MarchingCubes
             effect.World = world;
             effect.View = view;
             effect.Projection = projection;
+
+            effect.DirectionalLight0.Enabled = true;
+            
 
             effect.EnableDefaultLighting();
         }
@@ -776,7 +786,7 @@ namespace MarchingCubes
                 foreach (EffectPass pass in effect.CurrentTechnique.Passes)
                 {
                     pass.Begin();
-                    GraphicsDevice.DrawUserPrimitives<VertexPositionColor>(PrimitiveType.TriangleList, vertices, 0, vertices.Length / 3);
+                    GraphicsDevice.DrawUserPrimitives<VertexPositionNormalTexture>(PrimitiveType.TriangleList, vertices, 0, vertices.Length / 3);
                     pass.End();
                 }
                 effect.End();
