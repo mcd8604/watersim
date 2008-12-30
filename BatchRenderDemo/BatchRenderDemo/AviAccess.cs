@@ -4,7 +4,7 @@ using System.Runtime.InteropServices;
 /*
  * References: 
  *  http://msdn.microsoft.com/en-us/library/ms706554(VS.85).aspx
- *  Vfw32.lib (vfw.h) - http://doc.ddart.net/msdn/header/include/vfw.h.html
+ *  Vfw32.lib (Vfw.h)
  *  Microsoft Corporation
  * 
  * Author: Mike DeMauro
