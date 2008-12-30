@@ -30,7 +30,7 @@ namespace BatchRenderDemo
         IntPtr aviStream = IntPtr.Zero;
 
         // Codec - http://www.fourcc.org/ 
-        readonly int codec = FccType.MakeFourCC('M', 'P', 'G', '4');
+        readonly int codec = AviUtil.MakeFourCC('M', 'P', 'G', '4');
 
         int numFrames = 0;
 
@@ -67,7 +67,7 @@ namespace BatchRenderDemo
             //    result = AviAccess.AVIFileOpen(out aviFile, fileName, mode, 0);
             //}
 
-            result = AviAccess.AVIFileOpen(out aviFile, fileName, 4096, 0);
+            result = AviAccess.AVIFileOpen(out aviFile, fileName, AviUtil.OF_READWRITE | AviUtil.OF_CREATE, 0);
             if (result != 0) throw new Exception("Error creating avi file");
 
             //AviAccess.AVIFileAddRef(aviFile);
@@ -109,7 +109,7 @@ namespace BatchRenderDemo
         private void CreateStream()
         {
             AviStreamInfo psi = new AviStreamInfo();
-            psi.fccType = FccType.StreamType_Video;
+            psi.fccType = AviUtil.StreamType_Video;
             psi.fccHandler = codec;
             psi.dwFlags = 0;
             psi.dwCaps = 0;
