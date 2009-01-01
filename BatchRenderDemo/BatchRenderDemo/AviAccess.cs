@@ -57,15 +57,38 @@ namespace BatchRenderDemo
         public const int OF_PROMPT = 0x00002000;
         public const int OF_EXIST = 0x00004000;
         public const int OF_REOPEN = 0x00008000;
+
+        /* Flags for AVI file index */
+        public const int AVIIF_LIST = 0x00000001;
+        public const int AVIIF_TWOCC = 0x00000002;
+        public const int AVIIF_KEYFRAME = 0x00000010;
+    }
+
+    /// <summary>
+    /// http://msdn.microsoft.com/en-us/library/ms532290.aspx
+    /// </summary>
+    public struct BitMapInfoHeader 
+    {
+        public Int32 biSize; 
+        public Int32 biWidth; 
+        public Int32 biHeight; 
+        public Int16 biPlanes; 
+        public Int16 biBitCount; 
+        public Int32 biCompression; 
+        public Int32 biSizeImage; 
+        public Int32 biXPelsPerMeter; 
+        public Int32 biYPelsPerMeter; 
+        public Int32 biClrUsed; 
+        public Int32 biClrImportant;
     }
 
     public struct Rect
-    { 
-	    public Int32 x; 
-	    public Int32 y; 
-	    public Int32 width; 
-	    public Int32 height; 
-    } 	
+    {
+        public Int32 left;
+        public Int32 top;
+        public Int32 right;
+        public Int32 bottom;
+    }
 
     public struct AviStreamInfo
     {
@@ -73,7 +96,7 @@ namespace BatchRenderDemo
         public Int32 fccHandler;
         public Int32 dwFlags;
         public Int32 dwCaps;
-        public Int32 wPriority; 
+        public Int16 wPriority; 
         public Int16 wLanguage; 
         public Int32 dwScale; 
         public Int32 dwRate; 
@@ -89,33 +112,34 @@ namespace BatchRenderDemo
         public Int32[] szName; // length 64
     }
 
-    //public struct AVICOMPRESSOPTIONS
-    //{
-    //    public Int32 fccType;		              /* stream type, for consistency */
-    //    public Int32 fccHandler;                 /* compressor */
-    //    public Int32 dwKeyFrameEvery;            /* keyframe rate */
-    //    public Int32 dwQuality;                  /* compress quality 0-10,000 */
-    //    public Int32 dwBytesPerSecond;           /* bytes per second */
-    //    public Int32 dwFlags;                    /* flags... see below */
-    //    public IntPtr lpFormat;                  /* save format */
-    //    public Int32 cbFormat;
-    //    public IntPtr lpParms;                   /* compressor options */
-    //    public Int32 cbParms;
-    //    public Int32 dwInterleaveEvery;          /* for non-video streams only */
-    //}
+    public struct AviCompressOptions
+    {
+        public Int32 fccType;		              /* stream type, for consistency */
+        public Int32 fccHandler;                 /* compressor */
+        public Int32 dwKeyFrameEvery;            /* keyframe rate */
+        public Int32 dwQuality;                  /* compress quality 0-10,000 */
+        public Int32 dwBytesPerSecond;           /* bytes per second */
+        public Int32 dwFlags;                    /* flags... see below */
+        public IntPtr lpFormat;                  /* save format */
+        public Int32 cbFormat;
+        public IntPtr lpParms;                   /* compressor options */
+        public Int32 cbParms;
+        public Int32 dwInterleaveEvery;          /* for non-video streams only */
+    }
 
-    ///// <summary>
-    ///// Defines for the dwFlags field of the AVICOMPRESSOPTIONS struct
-    ///// Each of these flags determines if the appropriate field in the structure
-    ///// (dwInterleaveEvery, dwBytesPerSecond, and dwKeyFrameEvery) is payed
-    ///// attention to.  See the autodoc in avisave.c for details.
-    ///// </summary>
-    //public static class DWFLAGS {
-    //    public static short AVICOMPRESSF_INTERLEAVE	= 0x00000001;   // interleave
-    //    public static short AVICOMPRESSF_DATARATE = 0x00000002;   // use a data rate
-    //    public static short AVICOMPRESSF_KEYFRAMES = 0x00000004;   // use keyframes
-    //    public static short AVICOMPRESSF_VALID = 0x00000008;    // has valid data?
-    //}
+    /// <summary>
+    /// Defines for the dwFlags field of the AVICOMPRESSOPTIONS struct
+    /// Each of these flags determines if the appropriate field in the structure
+    /// (dwInterleaveEvery, dwBytesPerSecond, and dwKeyFrameEvery) is payed
+    /// attention to.  See the autodoc in avisave.c for details.
+    /// </summary>
+    public static class DWFLAGS
+    {
+        public static short AVICOMPRESSF_INTERLEAVE = 0x00000001;   // interleave
+        public static short AVICOMPRESSF_DATARATE = 0x00000002;   // use a data rate
+        public static short AVICOMPRESSF_KEYFRAMES = 0x00000004;   // use keyframes
+        public static short AVICOMPRESSF_VALID = 0x00000008;    // has valid data?
+    }
 
     class AviAccess
     {
@@ -177,6 +201,34 @@ namespace BatchRenderDemo
 
         #endregion
 
+        #region Opening and Closing Streams
+
+        /// <summary>
+        /// Increments the reference count of an AVI stream.
+        /// </summary>
+        /// <param name="pavi">Handle to an open stream.</param>
+        /// <returns>Returns the current reference count of the stream. This value should be used only for debugging purposes.</returns>
+        /// <remarks>The argument pavi is a pointer to an IAVIStream interface.</remarks>
+        [DllImport("avifil32.dll")]
+        public static extern int AVIStreamAddRef(
+            IntPtr pavi
+        );
+
+        /// <summary>
+        /// Decrements the reference count of an AVI stream interface handle, and closes the stream if the count reaches zero.
+        /// </summary>
+        /// <param name="pavi">Handle to an open stream.</param>
+        /// <returns>Returns the current reference count of the stream. This value should be used only for debugging purposes.</returns>
+        /// <remarks>The argument pavi is a pointer to an IAVIStream interface.</remarks>
+        [DllImport("avifil32.dll")]
+        public static extern int AVIStreamRelease(
+            IntPtr pavi
+        );
+
+        #endregion
+
+        #region Writing Individual Streams
+
         /// <summary>
         /// Creates a new stream in an existing file and creates an interface to the new stream.
         /// </summary>
@@ -196,6 +248,30 @@ namespace BatchRenderDemo
 			ref AviStreamInfo psi);
         
         /// <summary>
+        /// Sets the format of a stream at the specified position.
+        /// </summary>
+        /// <param name="pavi">Handle to an open stream.</param>
+        /// <param name="lPos">Position in the stream to receive the format.</param>
+        /// <param name="lpFormat">Pointer to a structure containing the new format.</param>
+        /// <param name="cbFormat">Size, in bytes, of the block of memory referenced by lpFormat.</param>
+        /// <returns>Returns zero if successful or an error otherwise.</returns>
+        /// <remarks>
+        /// The handler for writing AVI files does not accept format changes. 
+        /// Besides setting the initial format for a stream, 
+        /// only changes in the palette of a video stream are allowed in an AVI file. 
+        /// The palette change must occur after any frames already written to the AVI file. 
+        /// Other handlers might impose different restrictions.
+        /// 
+        /// The argument pavi is a pointer to an IAVIStream interface.
+        /// </remarks>
+		[DllImport("avifil32.dll")]
+		public static extern int AVIStreamSetFormat(
+            IntPtr pavi,  
+            int lPos,        
+            ref BitMapInfoHeader lpFormat,  
+            int cbFormat );
+
+        /// <summary>
         /// Writes data to a stream.
         /// </summary>
         /// <param name="pavi">Handle to an open stream.</param>
@@ -214,25 +290,41 @@ namespace BatchRenderDemo
         /// </remarks>
         [DllImport("avifil32.dll")]
         public static extern int AVIStreamWrite(
-          IntPtr pavi,
-          int lStart,
-          int lSamples,
-          IntPtr lpBuffer,
-          int cbBuffer,
-          int dwFlags,
-          ref int plSampWritten,
-          ref int plBytesWritten
+            IntPtr pavi,
+            int lStart,
+            int lSamples,
+            IntPtr lpBuffer,
+            int cbBuffer,
+            int dwFlags,
+            IntPtr plSampWritten,
+            IntPtr plBytesWritten
         );
 
+        #endregion
+
+        
         /// <summary>
-        /// Decrements the reference count of an AVI stream interface handle, and closes the stream if the count reaches zero.
+        /// Creates a compressed stream from an uncompressed stream and a compression filter, 
+        /// and returns the address of a pointer to the compressed stream. 
+        /// This function supports audio and video compression.
         /// </summary>
-        /// <param name="pavi">Handle to an open stream.</param>
-        /// <returns>Returns the current reference count of the stream. This value should be used only for debugging purposes.</returns>
-        /// <remarks>The argument pavi is a pointer to an IAVIStream interface.</remarks>
-        [DllImport("avifil32.dll")]
-        public static extern int AVIStreamRelease(
-            IntPtr pavi
-        );
+        /// <param name="ppsCompressed">Pointer to a buffer that receives the compressed stream pointer.</param>
+        /// <param name="psSource">Pointer to the stream to be compressed.</param>
+        /// <param name="lpOptions">Pointer to a structure that identifies the type of compression to use and the options to apply. 
+        /// You can specify video compression by identifying an appropriate handler in the AVICOMPRESSOPTIONS structure. 
+        /// For audio compression, specify the compressed data format.</param>
+        /// <param name="pclsidHandler">Pointer to a class identifier used to create the stream.</param>
+        /// <returns>Returns AVIERR_OK if successful or an error otherwise.</returns>
+        /// <remarks>
+        /// Applications can read from or write to the compressed stream.
+        /// A PAVISTREAM is a pointer to an IAVIStream interface.
+        /// </remarks>
+        //[DllImport("avifil32.dll")]
+        //public static extern int AVIMakeCompressedStream(
+        //    IntPtr ppsCompressed,
+        //    IntPtr psSource,
+        //    ref AviCompressOptions lpOptions,
+        //    int pclsidHandler // just send 0 since unneeded
+        //);
     }
 }

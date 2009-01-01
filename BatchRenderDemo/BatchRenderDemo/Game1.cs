@@ -28,9 +28,10 @@ namespace BatchRenderDemo
         // handles
         IntPtr aviFile = IntPtr.Zero;
         IntPtr aviStream = IntPtr.Zero;
+        int streamReferenceCount = 0;
 
         // Codec - http://www.fourcc.org/ 
-        readonly int codec = AviUtil.MakeFourCC('M', 'P', 'G', '4');
+        readonly int codec = AviUtil.MakeFourCC('M', 'P', 'E', 'G');
 
         int numFrames = 0;
 
@@ -102,7 +103,7 @@ namespace BatchRenderDemo
                 1,
                 GraphicsDevice.PresentationParameters.BackBufferFormat);
 
-            // 4 bpp
+            // 32 bpp, 4 bytes per pixel
             textureData = new byte[4 * GraphicsDevice.PresentationParameters.BackBufferWidth * GraphicsDevice.PresentationParameters.BackBufferHeight];
         }
 
@@ -111,28 +112,40 @@ namespace BatchRenderDemo
             AviStreamInfo psi = new AviStreamInfo();
             psi.fccType = AviUtil.StreamType_Video;
             psi.fccHandler = codec;
-            psi.dwFlags = 0;
-            psi.dwCaps = 0;
-            psi.wPriority = 0;
-            psi.wLanguage = 0;
+            //psi.dwFlags = 0;
+            //psi.dwCaps = 0;
+            //psi.wPriority = 0;
+            //psi.wLanguage = 0;
             psi.dwScale = 1;
             psi.dwRate = 30;
-            psi.dwStart = 0;
-            psi.dwLength = 0;
-            psi.dwInitialFrames = 0;
+            //psi.dwStart = 0;
+            //psi.dwLength = 0;
+            //psi.dwInitialFrames = 0;
             psi.dwSuggestedBufferSize = textureData.Length;
             psi.dwQuality = -1;
-            psi.dwSampleSize = 0;
-            psi.rcFrame.x = 0;
-            psi.rcFrame.y = 0;
-            psi.rcFrame.height = GraphicsDevice.PresentationParameters.BackBufferHeight;
-            psi.rcFrame.width = GraphicsDevice.PresentationParameters.BackBufferWidth;
-            psi.dwEditCount = 0;
-            psi.dwFormatChangeCount = 0;
-            psi.szName = new Int32[64];
+            //psi.dwSampleSize = 0;
+            //psi.rcFrame.x = 0;
+            //psi.rcFrame.y = 0;
+            psi.rcFrame.bottom = GraphicsDevice.PresentationParameters.BackBufferHeight;
+            psi.rcFrame.right = GraphicsDevice.PresentationParameters.BackBufferWidth;
+            //psi.dwEditCount = 0;
+            //psi.dwFormatChangeCount = 0;
 
             int result = AviAccess.AVIFileCreateStream(aviFile, out aviStream, ref psi);
             if (result != 0) throw new Exception("Error creating file stream");
+
+            streamReferenceCount = AviAccess.AVIStreamAddRef(aviFile);
+
+            BitMapInfoHeader bmih = new BitMapInfoHeader();
+            bmih.biSize = Marshal.SizeOf(bmih);
+            bmih.biHeight = GraphicsDevice.PresentationParameters.BackBufferHeight;
+            bmih.biWidth = GraphicsDevice.PresentationParameters.BackBufferWidth;
+            bmih.biPlanes = 1;
+            bmih.biBitCount = 32;
+
+            result = AviAccess.AVIStreamSetFormat(aviStream, 0, ref bmih, bmih.biSize);
+            if (result != 0) throw new Exception("Error setting stream format");
+
         }
 
         /// <summary>
@@ -163,7 +176,7 @@ namespace BatchRenderDemo
 
             if (lastState.IsKeyUp(Keys.Space) && curState.IsKeyDown(Keys.Space))
             {
-                AviAccess.AVIStreamRelease(aviStream);
+                 streamReferenceCount = AviAccess.AVIStreamRelease(aviStream);
             }
 
             lastState = curState;
@@ -190,22 +203,23 @@ namespace BatchRenderDemo
             GraphicsDevice.ResolveBackBuffer(resolveTexture, 0);
             resolveTexture.GetData<byte>(textureData);
 
-            int numSamples = 0;
-            int numBytes = 0;
+            IntPtr bufferPtr = GCHandle.Alloc(textureData, GCHandleType.Pinned).AddrOfPinnedObject();
 
             // NOTE: produces error on AVIStreamWrite
-            int result = AviAccess.AVIStreamWrite(
-                aviStream,
-                numFrames, 
-                1,
-                GCHandle.Alloc(textureData, GCHandleType.Pinned).AddrOfPinnedObject(),
-                textureData.Length,
-                0,
-                ref numSamples,
-                ref numBytes);
-            if (result != 0) throw new Exception("Error writing to avi stream");
-
-            ++numFrames;
+            if (streamReferenceCount > 0)
+            {
+                int result = AviAccess.AVIStreamWrite(
+                    aviStream,
+                    numFrames,
+                    1,
+                    bufferPtr,
+                    textureData.Length,
+                    AviUtil.AVIIF_KEYFRAME,
+                    IntPtr.Zero,
+                    IntPtr.Zero);
+                if (result != 0) throw new Exception("Error writing to avi stream");
+                ++numFrames;
+            }
         }
     }
 }
