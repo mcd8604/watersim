@@ -302,7 +302,8 @@ namespace BatchRenderDemo
 
         #endregion
 
-        
+        #region Creating Temporary Streams
+
         /// <summary>
         /// Creates a compressed stream from an uncompressed stream and a compression filter, 
         /// and returns the address of a pointer to the compressed stream. 
@@ -319,12 +320,14 @@ namespace BatchRenderDemo
         /// Applications can read from or write to the compressed stream.
         /// A PAVISTREAM is a pointer to an IAVIStream interface.
         /// </remarks>
-        //[DllImport("avifil32.dll")]
-        //public static extern int AVIMakeCompressedStream(
-        //    IntPtr ppsCompressed,
-        //    IntPtr psSource,
-        //    ref AviCompressOptions lpOptions,
-        //    int pclsidHandler // just send 0 since unneeded
-        //);
+        [DllImport("avifil32.dll")]
+        public static extern int AVIMakeCompressedStream(
+            out IntPtr ppsCompressed,
+            IntPtr psSource,
+            ref AviCompressOptions lpOptions,
+            IntPtr pclsidHandler
+        );
+
+        #endregion
     }
 }
