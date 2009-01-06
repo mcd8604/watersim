@@ -28,10 +28,10 @@ namespace BatchRenderDemo
         // handles
         IntPtr aviFile = IntPtr.Zero;
         IntPtr aviStream = IntPtr.Zero;
-        int streamReferenceCount = 0;
+        bool streamOpen = false;
 
         // Codec - http://www.fourcc.org/ 
-        readonly int codec = AviUtil.MakeFourCC('M', 'P', 'E', 'G');
+        readonly int codec = AviUtil.MakeFourCC('C', 'V', 'I', 'D');
 
         int numFrames = 0;
 
@@ -76,7 +76,7 @@ namespace BatchRenderDemo
 
         protected override void OnExiting(object sender, EventArgs args)
         {
-            //AviAccess.AVIFileRelease(aviFile);
+            AviAccess.AVIFileRelease(aviFile);
             AviAccess.AVIFileExit();
         }
 
@@ -131,10 +131,19 @@ namespace BatchRenderDemo
             //psi.dwEditCount = 0;
             //psi.dwFormatChangeCount = 0;
 
-            int result = AviAccess.AVIFileCreateStream(aviFile, out aviStream, ref psi);
+            IntPtr fileStream;
+
+            int result = AviAccess.AVIFileCreateStream(aviFile, out fileStream, ref psi);
             if (result != 0) throw new Exception("Error creating file stream");
 
-            streamReferenceCount = AviAccess.AVIStreamAddRef(aviFile);
+            AviCompressOptions lpOptions = new AviCompressOptions();
+            lpOptions.fccType = AviUtil.StreamType_Video;
+            lpOptions.fccHandler = codec;
+
+            result = AviAccess.AVIMakeCompressedStream(out aviStream, fileStream, ref lpOptions, IntPtr.Zero);
+            if (result != 0) throw new Exception("Error creating compressed stream");
+
+            streamOpen = true;
 
             BitMapInfoHeader bmih = new BitMapInfoHeader();
             bmih.biSize = Marshal.SizeOf(bmih);
@@ -176,7 +185,8 @@ namespace BatchRenderDemo
 
             if (lastState.IsKeyUp(Keys.Space) && curState.IsKeyDown(Keys.Space))
             {
-                 streamReferenceCount = AviAccess.AVIStreamRelease(aviStream);
+                if (streamOpen)
+                    streamOpen = AviAccess.AVIStreamRelease(aviStream) > 0;
             }
 
             lastState = curState;
@@ -206,7 +216,7 @@ namespace BatchRenderDemo
             IntPtr bufferPtr = GCHandle.Alloc(textureData, GCHandleType.Pinned).AddrOfPinnedObject();
 
             // NOTE: produces error on AVIStreamWrite
-            if (streamReferenceCount > 0)
+            if (streamOpen)
             {
                 int result = AviAccess.AVIStreamWrite(
                     aviStream,
