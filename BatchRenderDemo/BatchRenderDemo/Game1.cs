@@ -31,7 +31,7 @@ namespace BatchRenderDemo
         bool streamOpen = false;
 
         // Codec - http://www.fourcc.org/ 
-        readonly int codec = AviUtil.MakeFourCC('C', 'V', 'I', 'D');
+        readonly int codec = AviUtil.MakeFourCC('m', 'p', '4', '3');
 
         int numFrames = 0;
 
@@ -136,10 +136,24 @@ namespace BatchRenderDemo
             int result = AviAccess.AVIFileCreateStream(aviFile, out fileStream, ref psi);
             if (result != 0) throw new Exception("Error creating file stream");
 
-            AviCompressOptions lpOptions = new AviCompressOptions();
-            lpOptions.fccType = AviUtil.StreamType_Video;
-            lpOptions.fccHandler = codec;
+            AviCompressOptions_Class plpOptions = new AviCompressOptions_Class();
+            //lpOptions.fccType = AviUtil.StreamType_Video;
+            //lpOptions.fccHandler = (uint)codec;
+            //lpOptions.dwFlags = (uint)DWFLAGS.AVICOMPRESSF_VALID;
 
+            //IntPtr lpOptionsPtr = GCHandle.Alloc(lpOptions, GCHandleType.Pinned).AddrOfPinnedObject();
+            //IntPtr[] plpOptions = { lpOptionsPtr };
+
+            bool okay = AviAccess.AVISaveOptions(IntPtr.Zero, AviUtil.ICMF_CHOOSE_KEYFRAME | AviUtil.ICMF_CHOOSE_DATARATE, 1, ref fileStream, ref plpOptions);
+            if (!okay) throw new Exception("Error getting save options");
+
+            result = AviAccess.AVISaveOptionsFree(1, ref plpOptions);
+            if (result != 0) throw new Exception("Error freeing save options");
+
+            AviCompressOptions lpOptions = plpOptions.ToStruct();
+            lpOptions.fccType = (uint)AviUtil.StreamType_Video;
+            lpOptions.lpParms = IntPtr.Zero;
+            lpOptions.lpFormat = IntPtr.Zero;
             result = AviAccess.AVIMakeCompressedStream(out aviStream, fileStream, ref lpOptions, IntPtr.Zero);
             if (result != 0) throw new Exception("Error creating compressed stream");
 
@@ -151,6 +165,7 @@ namespace BatchRenderDemo
             bmih.biWidth = GraphicsDevice.PresentationParameters.BackBufferWidth;
             bmih.biPlanes = 1;
             bmih.biBitCount = 32;
+            //bmih.biSizeImage = textureData.Length;
 
             result = AviAccess.AVIStreamSetFormat(aviStream, 0, ref bmih, bmih.biSize);
             if (result != 0) throw new Exception("Error setting stream format");
