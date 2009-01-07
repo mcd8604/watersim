@@ -62,11 +62,16 @@ namespace BatchRenderDemo
         public const int AVIIF_LIST = 0x00000001;
         public const int AVIIF_TWOCC = 0x00000002;
         public const int AVIIF_KEYFRAME = 0x00000010;
+
+        public const int ICMF_CHOOSE_KEYFRAME = 0x0001;	// show KeyFrame Every box
+        public const int ICMF_CHOOSE_DATARATE = 0x0002;	// show DataRate box
+        public const int ICMF_CHOOSE_PREVIEW = 0x0004;	// allow expanded preview dialog
     }
 
     /// <summary>
     /// http://msdn.microsoft.com/en-us/library/ms532290.aspx
     /// </summary>
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public struct BitMapInfoHeader 
     {
         public Int32 biSize; 
@@ -81,7 +86,7 @@ namespace BatchRenderDemo
         public Int32 biClrUsed; 
         public Int32 biClrImportant;
     }
-
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public struct Rect
     {
         public Int32 left;
@@ -89,7 +94,7 @@ namespace BatchRenderDemo
         public Int32 right;
         public Int32 bottom;
     }
-
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public struct AviStreamInfo
     {
         public Int32 fccType;
@@ -111,22 +116,53 @@ namespace BatchRenderDemo
         public Int32 dwFormatChangeCount;
         public Int32[] szName; // length 64
     }
-
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public struct AviCompressOptions
     {
-        public Int32 fccType;		              /* stream type, for consistency */
-        public Int32 fccHandler;                 /* compressor */
-        public Int32 dwKeyFrameEvery;            /* keyframe rate */
-        public Int32 dwQuality;                  /* compress quality 0-10,000 */
-        public Int32 dwBytesPerSecond;           /* bytes per second */
-        public Int32 dwFlags;                    /* flags... see below */
+        public UInt32 fccType;		              /* stream type, for consistency */
+        public UInt32 fccHandler;                 /* compressor */
+        public UInt32 dwKeyFrameEvery;            /* keyframe rate */
+        public UInt32 dwQuality;                  /* compress quality 0-10,000 */
+        public UInt32 dwBytesPerSecond;           /* bytes per second */
+        public UInt32 dwFlags;                    /* flags... see below */
         public IntPtr lpFormat;                  /* save format */
-        public Int32 cbFormat;
+        public UInt32 cbFormat;
         public IntPtr lpParms;                   /* compressor options */
-        public Int32 cbParms;
-        public Int32 dwInterleaveEvery;          /* for non-video streams only */
+        public UInt32 cbParms;
+        public UInt32 dwInterleaveEvery;          /* for non-video streams only */
     }
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
+    public class AviCompressOptions_Class
+    {
+        public UInt32 fccType;
+        public UInt32 fccHandler;
+        public UInt32 dwKeyFrameEvery;  // only used with AVICOMRPESSF_KEYFRAMES
+        public UInt32 dwQuality;
+        public UInt32 dwBytesPerSecond; // only used with AVICOMPRESSF_DATARATE
+        public UInt32 dwFlags;
+        public IntPtr lpFormat;
+        public UInt32 cbFormat;
+        public IntPtr lpParms;
+        public UInt32 cbParms;
+        public UInt32 dwInterleaveEvery;
 
+        public AviCompressOptions ToStruct()
+        {
+            AviCompressOptions returnVar = new AviCompressOptions();
+            returnVar.fccType = this.fccType;
+            returnVar.fccHandler = this.fccHandler;
+            returnVar.dwKeyFrameEvery = this.dwKeyFrameEvery;
+            returnVar.dwQuality = this.dwQuality;
+            returnVar.dwBytesPerSecond = this.dwBytesPerSecond;
+            returnVar.dwFlags = this.dwFlags;
+            returnVar.lpFormat = this.lpFormat;
+            returnVar.cbFormat = this.cbFormat;
+            returnVar.lpParms = this.lpParms;
+            returnVar.cbParms = this.cbParms;
+            returnVar.dwInterleaveEvery = this.dwInterleaveEvery;
+            return returnVar;
+        }
+    }
     /// <summary>
     /// Defines for the dwFlags field of the AVICOMPRESSOPTIONS struct
     /// Each of these flags determines if the appropriate field in the structure
@@ -328,6 +364,20 @@ namespace BatchRenderDemo
             IntPtr pclsidHandler
         );
 
+        [DllImport("avifil32.dll")]
+        public static extern bool AVISaveOptions(
+            IntPtr hwnd,
+            UInt32 uiFlags,
+            int nStreams,
+            ref IntPtr ppavi,
+            ref AviCompressOptions_Class plpOptions  
+        );
+
+        [DllImport("avifil32.dll")]
+        public static extern int AVISaveOptionsFree(
+            int nStreams,
+            ref AviCompressOptions_Class plpOptions
+        );
         #endregion
     }
 }
