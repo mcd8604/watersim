@@ -9,6 +9,7 @@ using Microsoft.Xna.Framework.Input;
 using Microsoft.Xna.Framework.Net;
 using Microsoft.Xna.Framework.Storage;
 using System.Diagnostics;
+using AviAccess;
 
 namespace WaterPolygonizerDemo
 {
@@ -34,8 +35,8 @@ namespace WaterPolygonizerDemo
 
         BasicEffect effect;
 
-        Vector3 camPosition = new Vector3(75, 25, 75);
-        Vector3 camTarget = new Vector3(25, 0, 25);
+        Vector3 camPosition = new Vector3(75, 75, 75);
+        Vector3 camTarget = new Vector3(Polygonizer.RANGE / 2, 0, Polygonizer.RANGE / 2);
         Quaternion camRotation = Quaternion.Identity;
 
         Matrix world;
@@ -51,6 +52,10 @@ namespace WaterPolygonizerDemo
 
             waterbody = new WaterBody();
             polygonizer = new Polygonizer();
+
+            AviWriter aviWriter = new AviWriter(this, "test.avi");
+
+            Components.Add(aviWriter);
         }
 
         /// <summary>
@@ -201,6 +206,16 @@ namespace WaterPolygonizerDemo
                 paused = false;
             }
 
+            if (keyboard.IsKeyDown(Keys.Z))
+            {
+                polygonizer.Paused = true;
+            }
+
+            if (keyboard.IsKeyDown(Keys.X))
+            {
+                polygonizer.Paused = false;
+            }
+
             if (hasdrawn && !paused)
             {
                 waterbody.Update();
@@ -269,12 +284,13 @@ namespace WaterPolygonizerDemo
                 effect.End();
             }
 
+            base.Draw(gameTime);
+#if DEBUG
             spriteBatch.Begin();
             spriteBatch.DrawString(font, "Grid Time: " + polygonizer.GridTime, Vector2.Zero, Color.White);
             spriteBatch.DrawString(font, "Poly Time: " + polygonizer.PolyTime, new Vector2(0, 24), Color.White);
             spriteBatch.End();
-
-            base.Draw(gameTime);
+#endif
         }
     }
 }

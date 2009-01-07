@@ -10,8 +10,8 @@ namespace WaterPolygonizerDemo
     class Polygonizer
     {
         public const float RANGE = 50;
-        private const float GRID_SIZE = RANGE / 24;
-        private const float ISOLEVEL = 0.075f;
+        private const float GRID_SIZE = RANGE / 32;
+        private const float ISOLEVEL = 1f / 16;
         private const int GRID_DIMENSION = (int)(RANGE / GRID_SIZE);
 
         private float pointVal;
@@ -23,6 +23,13 @@ namespace WaterPolygonizerDemo
         public VertexPositionNormalTexture[] Vertices
         {
             get { return vertices; }
+        }
+
+        private bool paused = true;
+        public bool Paused
+        {
+            get { return paused; }
+            set { paused = value; }
         }
 
         public Polygonizer()
@@ -533,7 +540,7 @@ namespace WaterPolygonizerDemo
             return Vector3.Lerp(v1, v2, (isolevel - v1Value) / (v2Value - v1Value));
         }
         
-
+#if DEBUG
         private double gridTime;
         public double GridTime
         {
@@ -547,24 +554,34 @@ namespace WaterPolygonizerDemo
         }
 
         Stopwatch sw = new Stopwatch();
+#endif
 
         internal void Update(Water[] water)
         {
-            sw.Start();
+            if (!paused)
+            {
+#if DEBUG
+                sw.Start();
+#endif
 
-            updateGrid(water);
+                updateGrid(water);
+                
+#if DEBUG
+                sw.Stop();
+                gridTime = sw.Elapsed.TotalSeconds;
+                sw.Reset();
 
-            sw.Stop();
-            gridTime = sw.Elapsed.TotalSeconds;
-            sw.Reset();
+                sw.Start();
+#endif
 
-            sw.Start();
+                Polygonise(ISOLEVEL);
 
-            Polygonise(ISOLEVEL);
-
-            sw.Stop();
-            polyTime = sw.Elapsed.TotalSeconds;
-            sw.Reset();
+#if DEBUG
+                sw.Stop();
+                polyTime = sw.Elapsed.TotalSeconds;
+                sw.Reset();
+#endif
+            }
         }
 
     }
