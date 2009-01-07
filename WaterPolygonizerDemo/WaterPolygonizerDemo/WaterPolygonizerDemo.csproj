@@ -127,7 +127,7 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\avi\AviAccess\AviAccess.csproj">
+    <ProjectReference Include="..\AviAccess\AviAccess.csproj">
       <Project>{A06205FC-A4DF-42CE-B163-E55DD6E24A4D}</Project>
       <Name>AviAccess</Name>
     </ProjectReference>
