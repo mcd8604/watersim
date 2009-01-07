@@ -16,11 +16,12 @@ namespace AviAccess
         protected AviManager aviManager;
         protected VideoStream videoStream;
 
-        protected RenderTarget2D renderTarget;
-        //protected ResolveTexture2D resolveTexture;
+        protected ResolveTexture2D resolveTexture;
         protected byte[] textureData;
 
         protected string fileName;
+
+        protected SpriteBatch spriteBatch;
 
         public AviWriter(Game game, string fileName)
             : base(game)
@@ -28,20 +29,24 @@ namespace AviAccess
             this.fileName = fileName;
         }
 
-        protected override void  LoadContent()
+        protected override void LoadContent()
         {
-            renderTarget = new RenderTarget2D(
+            spriteBatch = new SpriteBatch(GraphicsDevice);
+
+            int width = GraphicsDevice.PresentationParameters.BackBufferWidth;
+            int height = GraphicsDevice.PresentationParameters.BackBufferHeight;
+
+            resolveTexture = new ResolveTexture2D(
                 GraphicsDevice,
-                GraphicsDevice.PresentationParameters.BackBufferWidth,
-                GraphicsDevice.PresentationParameters.BackBufferHeight,
+                width,
+                height,
                 1,
                 GraphicsDevice.PresentationParameters.BackBufferFormat);
-            GraphicsDevice.SetRenderTarget(1, renderTarget);
 
-            // 32 bpp, 4 bytes per pixel
-            textureData = new byte[4 * GraphicsDevice.PresentationParameters.BackBufferWidth * GraphicsDevice.PresentationParameters.BackBufferHeight];
+            // Assuming 32 bpp => 4 bytes per pixel
+            textureData = new byte[4 * width * height];
             aviManager = new AviManager(fileName, false);
-            videoStream = aviManager.AddVideoStream(true, 30, textureData.Length, renderTarget.Width, renderTarget.Height, PixelFormat.Format32bppArgb); 
+            videoStream = aviManager.AddVideoStream(true, 30, textureData.Length, width, height, PixelFormat.Format32bppArgb); 
             
             //Avi.AVICOMPRESSOPTIONS compressOptions = new Avi.AVICOMPRESSOPTIONS();
             //compressOptions.fccType = (uint)Avi.streamtypeVIDEO;
@@ -65,14 +70,15 @@ namespace AviAccess
 
         public override void Draw(GameTime gameTime)
         {
-            //GraphicsDevice.ResolveBackBuffer(renderTarget);
-            GraphicsDevice.SetRenderTarget(1, null);
-            renderTarget.GetTexture().GetData<byte>(textureData);
+            GraphicsDevice.ResolveBackBuffer(resolveTexture);
+            resolveTexture.GetData<byte>(textureData);
             videoStream.AddFrame(textureData);
-            GraphicsDevice.SetRenderTarget(1, renderTarget);
+            
+            spriteBatch.Begin();
+            spriteBatch.Draw(resolveTexture, Vector2.Zero, Microsoft.Xna.Framework.Graphics.Color.White);
+            spriteBatch.End();
 
             base.Draw(gameTime);
         }
-        
     }
 }

@@ -381,10 +381,20 @@ namespace AviFile
 
         public void AddFrame(byte[] bmpData)
         {
+            // Flip byte rows for AVIStream
+            byte[] flippedBytes = new byte[bmpData.Length];
+
+            int stride = this.width * this.countBitsPerPixel / 8;
+            int yIndex0 = 0;
+            int yIndex1 = (this.height - 1) * stride;
+
+            for (int y = 0; y < this.height; ++y, yIndex0 += stride, yIndex1 -= stride)
+                Array.Copy(bmpData, yIndex1, flippedBytes, yIndex0, stride);
+
             int result = Avi.AVIStreamWrite(writeCompressed ? compressedStream : StreamPointer,
                 countFrames, 1,
-                GCHandle.Alloc(bmpData, GCHandleType.Pinned).AddrOfPinnedObject(),
-                (Int32)(bmpData.Length),
+                GCHandle.Alloc(flippedBytes, GCHandleType.Pinned).AddrOfPinnedObject(),
+                (Int32)(flippedBytes.Length),
                 0, 0, 0);
 
             if (result != 0)

@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 10.00
 # Visual Studio 2008
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WaterPolygonizerDemo", "WaterPolygonizerDemo\WaterPolygonizerDemo.csproj", "{257139B5-09C7-482F-B625-5EECC4BBB0CC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AviAccess", "..\avi\AviAccess\AviAccess.csproj", "{A06205FC-A4DF-42CE-B163-E55DD6E24A4D}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AviAccess", "AviAccess\AviAccess.csproj", "{A06205FC-A4DF-42CE-B163-E55DD6E24A4D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
