@@ -24,10 +24,14 @@ namespace WaterDemo
 		Matrix viewMatrix;
 		Matrix projectionMatrix;
 
+        Vector3 cameraPos = new Vector3(40, 30, 20);
+
 		VertexPositionColor[] waterPoints;
 		VertexDeclaration basicEffectVertexDeclaration;
 		VertexBuffer vertexBuffer;
         Effect effect;
+        Model model;
+        Matrix scale;
 
 		WaterBody waterbody;
 
@@ -73,6 +77,17 @@ namespace WaterDemo
 
 			graphics.GraphicsDevice.RenderState.PointSize = 10;
 
+            model = Content.Load<Model>("sphere");
+            scale = Matrix.CreateScale(0.5f);
+
+            foreach (ModelMesh mesh in model.Meshes)
+            {
+                foreach (ModelMeshPart part in mesh.MeshParts)
+                {
+                    part.Effect = effect;
+                }
+            }
+
 			// TODO: use this.Content to load your game content here
 		}
 
@@ -87,7 +102,7 @@ namespace WaterDemo
 			//	Matrix.CreateRotationY(tilt);
 			worldMatrix = Matrix.CreateRotationX(0);
 
-			viewMatrix = Matrix.CreateLookAt(new Vector3(40, 30, 20), Vector3.Zero, Vector3.Up);
+			viewMatrix = Matrix.CreateLookAt(cameraPos, Vector3.Zero, Vector3.Up);
 
 			projectionMatrix = Matrix.CreatePerspectiveFieldOfView(
 				MathHelper.ToRadians(45),  // 45 degree angle
@@ -101,14 +116,24 @@ namespace WaterDemo
 		/// </summary>
 		private void InitializeEffect()
 		{
-            effect = Content.Load<Effect>("effect");
+            effect = Content.Load<Effect>("Basic");
 
             basicEffectVertexDeclaration = new VertexDeclaration(
-                            graphics.GraphicsDevice, VertexPositionColor.VertexElements);
+                            graphics.GraphicsDevice, VertexPositionNormalTexture.VertexElements);
 
-            effect.Parameters["world"].SetValue(worldMatrix);
-            effect.Parameters["view"].SetValue(viewMatrix);
-            effect.Parameters["projection"].SetValue(projectionMatrix);
+            effect.Parameters["World"].SetValue(worldMatrix);
+            effect.Parameters["View"].SetValue(viewMatrix);
+            effect.Parameters["Projection"].SetValue(projectionMatrix);
+
+            effect.Parameters["lightPos"].SetValue(new Vector4(20f, 20f, 20f, 1f));
+            effect.Parameters["lightColor"].SetValue(Vector4.One);
+            effect.Parameters["cameraPos"].SetValue(new Vector4(cameraPos, 1f));
+
+            effect.Parameters["ambientColor"].SetValue(new Vector4(.2f, .2f, .2f, 1f));
+            effect.Parameters["materialColor"].SetValue(new Vector4(.0f, .5f, .8f, 1f));
+            effect.Parameters["diffusePower"].SetValue(1f);
+            effect.Parameters["specularPower"].SetValue(1);
+            effect.Parameters["exponent"].SetValue(8);
 
 			/*basicEffectVertexDeclaration = new VertexDeclaration(
 				graphics.GraphicsDevice, VertexPositionColor.VertexElements);
@@ -248,19 +273,30 @@ namespace WaterDemo
 			graphics.GraphicsDevice.Clear(Color.Black);
 
 			// TODO: Add your drawing code here
-			graphics.GraphicsDevice.VertexDeclaration = basicEffectVertexDeclaration;
-			graphics.GraphicsDevice.Vertices[0].SetSource(vertexBuffer, 0, VertexPositionColor.SizeInBytes);
+            //graphics.GraphicsDevice.VertexDeclaration = basicEffectVertexDeclaration;
+            //graphics.GraphicsDevice.Vertices[0].SetSource(vertexBuffer, 0, VertexPositionColor.SizeInBytes);
 
-			effect.Begin();
-            foreach (EffectPass pass in effect.CurrentTechnique.Passes)
-			{
-				pass.Begin();
+            //effect.Begin();
+            //foreach (EffectPass pass in effect.CurrentTechnique.Passes)
+            //{
+            //    pass.Begin();
 
-				graphics.GraphicsDevice.DrawPrimitives(PrimitiveType.PointList, 0, waterbody.water.Length);
+            //    graphics.GraphicsDevice.DrawPrimitives(PrimitiveType.PointList, 0, waterbody.water.Length);
 
-				pass.End();
-			}
-            effect.End();
+            //    pass.End();
+            //}
+            //effect.End();
+
+            graphics.GraphicsDevice.VertexDeclaration = basicEffectVertexDeclaration;
+            foreach (Water w in waterbody.water)
+            {
+                effect.Parameters["World"].SetValue(Matrix.Multiply(scale, Matrix.CreateTranslation(w.Position)));
+                foreach (ModelMesh mesh in model.Meshes)
+                {
+                    mesh.Draw();
+                }
+            }
+            effect.Parameters["World"].SetValue(worldMatrix);
 
 			base.Draw(gameTime);
 		}
