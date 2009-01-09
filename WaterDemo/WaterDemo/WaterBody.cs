@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -45,10 +46,26 @@ namespace WaterDemo
 
 		internal Water[] water;
 
+		internal List<Water>[, ,] watergrid;
+
+		Vector3 GridMin;
+		Vector3 GridMax;
+		Vector3 GridSize;
+		Vector3 GridResolution = Vector3.Zero;
+
+		public bool UseGrid = true;
+
+		public Stopwatch timer;
+
 		public WaterBody()
 		{
 			CalcKernels();
 			Spawn();
+			if (UseGrid)
+			{
+				SetupGrid();
+			}
+			timer = new Stopwatch();
 		}
 
 		private void CalcKernels()
@@ -84,12 +101,80 @@ namespace WaterDemo
 			water = list.ToArray();
 		}
 
+		private void SetupGrid()
+		{
+			float cellsize = SmoothRadius * 2;
+			double res = SimScale / cellsize;
+			double size = cellsize / SimScale;
+
+			GridMin = Min;
+			GridMin.X -= 1f; GridMin.Y -= 1f; GridMin.Z -= 1f;
+			GridMax = Max;
+			GridMax.X += 1f; GridMax.Y += 1f; GridMax.Z += 1f;
+
+			GridSize = GridMax - GridMin;
+
+			GridResolution.X = (int)Math.Ceiling(GridSize.X * res);
+			GridResolution.Y = (int)Math.Ceiling(GridSize.Y * res);
+			GridResolution.Z = (int)Math.Ceiling(GridSize.Z * res);
+
+			GridSize.X = (int)Math.Ceiling(GridResolution.X * size);
+			GridSize.Y = (int)Math.Ceiling(GridResolution.Y * size);
+			GridSize.Z = (int)Math.Ceiling(GridResolution.Z * size);
+
+			watergrid = new List<Water>[(int)GridSize.X, (int)GridSize.Y, (int)GridSize.Z];
+			for (int x = 0; x < (int)GridSize.X; ++x)
+			{
+				for (int y = 0; y < (int)GridSize.Y; ++y)
+				{
+					for (int z = 0; z < (int)GridSize.Z; ++z)
+					{
+						watergrid[x,y,z] = new List<Water>();
+					}
+				}
+			}
+		}
+
+		private void GridParticles()
+		{
+			foreach (List<Water> list in watergrid)
+			{
+				list.Clear();
+			}
+
+			Vector3 delta = GridResolution / GridSize;
+			foreach (Water item in water)
+			{
+				watergrid[
+					(int)((item.Position.X - GridMin.X) * delta.X),
+					(int)((item.Position.Y - GridMin.Y) * delta.Y),
+					(int)((item.Position.Z - GridMin.Z) * delta.Z)].Add(item);
+			}
+		}
+
 		public void Update()
 		{
-			findNeighbors();
+			timer.Start();
+
+			if (UseGrid)
+			{
+				GridParticles();
+				findNeighborsGrid();
+			}
+			else
+			{
+				findNeighbors();
+			}
+
 			doPressure();
 			doForces();
+			
 			doStuff();
+
+
+			timer.Stop();
+			Console.WriteLine( "Update: " + timer.Elapsed.TotalSeconds);
+			timer.Reset();
 		}
 
 		private void findNeighbors()
@@ -107,6 +192,361 @@ namespace WaterDemo
 					if (R2 > dsq)
 					{
 						a.Neighbors.Add(b);
+					}
+				}
+			}
+		}
+
+		private void findNeighborsGrid()
+		{
+			for (int x = 0; x < (int)GridSize.X; ++x)
+			{
+				for (int y = 0; y < (int)GridSize.Y; ++y)
+				{
+					for (int z = 0; z < (int)GridSize.Z; ++z)
+					{
+						foreach (Water a in watergrid[x,y,z])
+						{
+							a.Neighbors.Clear();
+							foreach (Water b in watergrid[x, y, z])
+							{
+								if (a == b) { continue; }
+								float dx = (a.Position.X - b.Position.X) * SimScale;
+								float dy = (a.Position.Y - b.Position.Y) * SimScale;
+								float dz = (a.Position.Z - b.Position.Z) * SimScale;
+								float dsq = (dx * dx + dy * dy + dz * dz);
+								if (R2 > dsq)
+								{
+									a.Neighbors.Add(b);
+								}
+							}
+							if (x > 0)
+							{
+								foreach (Water b in watergrid[x - 1, y, z])
+								{
+									if (a == b)
+									{
+										continue;
+									}
+									float dx = (a.Position.X - b.Position.X) * SimScale;
+									float dy = (a.Position.Y - b.Position.Y) * SimScale;
+									float dz = (a.Position.Z - b.Position.Z) * SimScale;
+									float dsq = (dx * dx + dy * dy + dz * dz);
+									if (R2 > dsq)
+									{
+										a.Neighbors.Add(b);
+									}
+								}
+								if (y > 0)
+								{
+									foreach (Water b in watergrid[x - 1, y - 1, z])
+									{
+										if (a == b)
+										{
+											continue;
+										}
+										float dx = (a.Position.X - b.Position.X) * SimScale;
+										float dy = (a.Position.Y - b.Position.Y) * SimScale;
+										float dz = (a.Position.Z - b.Position.Z) * SimScale;
+										float dsq = (dx * dx + dy * dy + dz * dz);
+										if (R2 > dsq)
+										{
+											a.Neighbors.Add(b);
+										}
+									}
+									if (z > 0)
+									{
+										foreach (Water b in watergrid[x - 1, y - 1, z - 1])
+										{
+											if (a == b)
+											{
+												continue;
+											}
+											float dx = (a.Position.X - b.Position.X) * SimScale;
+											float dy = (a.Position.Y - b.Position.Y) * SimScale;
+											float dz = (a.Position.Z - b.Position.Z) * SimScale;
+											float dsq = (dx * dx + dy * dy + dz * dz);
+											if (R2 > dsq)
+											{
+												a.Neighbors.Add(b);
+											}
+										}
+									}
+									if (z < GridSize.Z - 1)
+									{
+										foreach (Water b in watergrid[x - 1, y - 1, z + 1])
+										{
+											if (a == b)
+											{
+												continue;
+											}
+											float dx = (a.Position.X - b.Position.X) * SimScale;
+											float dy = (a.Position.Y - b.Position.Y) * SimScale;
+											float dz = (a.Position.Z - b.Position.Z) * SimScale;
+											float dsq = (dx * dx + dy * dy + dz * dz);
+											if (R2 > dsq)
+											{
+												a.Neighbors.Add(b);
+											}
+										}
+									}
+								}
+								if (y < GridSize.Y - 1)
+								{
+									foreach (Water b in watergrid[x - 1, y + 1, z])
+									{
+										if (a == b)
+										{
+											continue;
+										}
+										float dx = (a.Position.X - b.Position.X) * SimScale;
+										float dy = (a.Position.Y - b.Position.Y) * SimScale;
+										float dz = (a.Position.Z - b.Position.Z) * SimScale;
+										float dsq = (dx * dx + dy * dy + dz * dz);
+										if (R2 > dsq)
+										{
+											a.Neighbors.Add(b);
+										}
+									}
+									if (z > 0)
+									{
+										foreach (Water b in watergrid[x - 1, y + 1, z - 1])
+										{
+											if (a == b)
+											{
+												continue;
+											}
+											float dx = (a.Position.X - b.Position.X) * SimScale;
+											float dy = (a.Position.Y - b.Position.Y) * SimScale;
+											float dz = (a.Position.Z - b.Position.Z) * SimScale;
+											float dsq = (dx * dx + dy * dy + dz * dz);
+											if (R2 > dsq)
+											{
+												a.Neighbors.Add(b);
+											}
+										}
+									}
+									if (z < GridSize.Z - 1)
+									{
+										foreach (Water b in watergrid[x - 1, y + 1, z + 1])
+										{
+											if (a == b)
+											{
+												continue;
+											}
+											float dx = (a.Position.X - b.Position.X) * SimScale;
+											float dy = (a.Position.Y - b.Position.Y) * SimScale;
+											float dz = (a.Position.Z - b.Position.Z) * SimScale;
+											float dsq = (dx * dx + dy * dy + dz * dz);
+											if (R2 > dsq)
+											{
+												a.Neighbors.Add(b);
+											}
+										}
+									}
+								}
+							}
+							if (x < GridSize.X - 1)
+							{
+								foreach (Water b in watergrid[x + 1, y, z])
+								{
+									if (a == b)
+									{
+										continue;
+									}
+									float dx = (a.Position.X - b.Position.X) * SimScale;
+									float dy = (a.Position.Y - b.Position.Y) * SimScale;
+									float dz = (a.Position.Z - b.Position.Z) * SimScale;
+									float dsq = (dx * dx + dy * dy + dz * dz);
+									if (R2 > dsq)
+									{
+										a.Neighbors.Add(b);
+									}
+								}
+								if (y > 0)
+								{
+									foreach (Water b in watergrid[x + 1, y - 1, z])
+									{
+										if (a == b)
+										{
+											continue;
+										}
+										float dx = (a.Position.X - b.Position.X) * SimScale;
+										float dy = (a.Position.Y - b.Position.Y) * SimScale;
+										float dz = (a.Position.Z - b.Position.Z) * SimScale;
+										float dsq = (dx * dx + dy * dy + dz * dz);
+										if (R2 > dsq)
+										{
+											a.Neighbors.Add(b);
+										}
+									}
+									if (z > 0)
+									{
+										foreach (Water b in watergrid[x + 1, y - 1, z - 1])
+										{
+											if (a == b)
+											{
+												continue;
+											}
+											float dx = (a.Position.X - b.Position.X) * SimScale;
+											float dy = (a.Position.Y - b.Position.Y) * SimScale;
+											float dz = (a.Position.Z - b.Position.Z) * SimScale;
+											float dsq = (dx * dx + dy * dy + dz * dz);
+											if (R2 > dsq)
+											{
+												a.Neighbors.Add(b);
+											}
+										}
+									}
+									if (z < GridSize.Z - 1)
+									{
+										foreach (Water b in watergrid[x + 1, y - 1, z + 1])
+										{
+											if (a == b)
+											{
+												continue;
+											}
+											float dx = (a.Position.X - b.Position.X) * SimScale;
+											float dy = (a.Position.Y - b.Position.Y) * SimScale;
+											float dz = (a.Position.Z - b.Position.Z) * SimScale;
+											float dsq = (dx * dx + dy * dy + dz * dz);
+											if (R2 > dsq)
+											{
+												a.Neighbors.Add(b);
+											}
+										}
+									}
+								}
+								if (y < GridSize.Y - 1)
+								{
+									foreach (Water b in watergrid[x + 1, y + 1, z])
+									{
+										if (a == b)
+										{
+											continue;
+										}
+										float dx = (a.Position.X - b.Position.X) * SimScale;
+										float dy = (a.Position.Y - b.Position.Y) * SimScale;
+										float dz = (a.Position.Z - b.Position.Z) * SimScale;
+										float dsq = (dx * dx + dy * dy + dz * dz);
+										if (R2 > dsq)
+										{
+											a.Neighbors.Add(b);
+										}
+									}
+									if (z > 0)
+									{
+										foreach (Water b in watergrid[x + 1, y + 1, z - 1])
+										{
+											if (a == b)
+											{
+												continue;
+											}
+											float dx = (a.Position.X - b.Position.X) * SimScale;
+											float dy = (a.Position.Y - b.Position.Y) * SimScale;
+											float dz = (a.Position.Z - b.Position.Z) * SimScale;
+											float dsq = (dx * dx + dy * dy + dz * dz);
+											if (R2 > dsq)
+											{
+												a.Neighbors.Add(b);
+											}
+										}
+									}
+									if (z < GridSize.Z - 1)
+									{
+										foreach (Water b in watergrid[x + 1, y + 1, z + 1])
+										{
+											if (a == b)
+											{
+												continue;
+											}
+											float dx = (a.Position.X - b.Position.X) * SimScale;
+											float dy = (a.Position.Y - b.Position.Y) * SimScale;
+											float dz = (a.Position.Z - b.Position.Z) * SimScale;
+											float dsq = (dx * dx + dy * dy + dz * dz);
+											if (R2 > dsq)
+											{
+												a.Neighbors.Add(b);
+											}
+										}
+									}
+								}
+							}
+
+							if (y > 0)
+							{
+								foreach (Water b in watergrid[x, y - 1, z])
+								{
+									if (a == b)
+									{
+										continue;
+									}
+									float dx = (a.Position.X - b.Position.X) * SimScale;
+									float dy = (a.Position.Y - b.Position.Y) * SimScale;
+									float dz = (a.Position.Z - b.Position.Z) * SimScale;
+									float dsq = (dx * dx + dy * dy + dz * dz);
+									if (R2 > dsq)
+									{
+										a.Neighbors.Add(b);
+									}
+								}
+							}
+							if (y < GridSize.Y - 1)
+							{
+								foreach (Water b in watergrid[x, y + 1, z])
+								{
+									if (a == b)
+									{
+										continue;
+									}
+									float dx = (a.Position.X - b.Position.X) * SimScale;
+									float dy = (a.Position.Y - b.Position.Y) * SimScale;
+									float dz = (a.Position.Z - b.Position.Z) * SimScale;
+									float dsq = (dx * dx + dy * dy + dz * dz);
+									if (R2 > dsq)
+									{
+										a.Neighbors.Add(b);
+									}
+								}
+							}
+
+							if (z > 0)
+							{
+								foreach (Water b in watergrid[x, y, z - 1])
+								{
+									if (a == b)
+									{
+										continue;
+									}
+									float dx = (a.Position.X - b.Position.X) * SimScale;
+									float dy = (a.Position.Y - b.Position.Y) * SimScale;
+									float dz = (a.Position.Z - b.Position.Z) * SimScale;
+									float dsq = (dx * dx + dy * dy + dz * dz);
+									if (R2 > dsq)
+									{
+										a.Neighbors.Add(b);
+									}
+								}
+							}
+							if (z < GridSize.Z - 1)
+							{
+								foreach (Water b in watergrid[x, y, z + 1])
+								{
+									if (a == b)
+									{
+										continue;
+									}
+									float dx = (a.Position.X - b.Position.X) * SimScale;
+									float dy = (a.Position.Y - b.Position.Y) * SimScale;
+									float dz = (a.Position.Z - b.Position.Z) * SimScale;
+									float dsq = (dx * dx + dy * dy + dz * dz);
+									if (R2 > dsq)
+									{
+										a.Neighbors.Add(b);
+									}
+								}
+							}
+						}
 					}
 				}
 			}
