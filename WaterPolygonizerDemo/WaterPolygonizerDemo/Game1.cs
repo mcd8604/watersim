@@ -35,8 +35,8 @@ namespace WaterPolygonizerDemo
 
         BasicEffect effect;
 
-        Vector3 camPosition = new Vector3(75, 75, 75);
-        Vector3 camTarget = new Vector3(Polygonizer.RANGE / 2, 0, Polygonizer.RANGE / 2);
+        Vector3 camPosition;
+        Vector3 camTarget;
         Quaternion camRotation = Quaternion.Identity;
 
         Matrix world;
@@ -53,9 +53,9 @@ namespace WaterPolygonizerDemo
             waterbody = new WaterBody();
             polygonizer = new Polygonizer();
 
-            AviWriter aviWriter = new AviWriter(this, "test.avi");
+            //AviWriter aviWriter = new AviWriter(this, "test.avi");
 
-            Components.Add(aviWriter);
+            //Components.Add(aviWriter);
         }
 
         /// <summary>
@@ -116,8 +116,19 @@ namespace WaterPolygonizerDemo
         private void InitializeMatrices()
         {
             world = Matrix.Identity;
-            view = Matrix.CreateLookAt(camPosition, camTarget, Vector3.Up);
+            resetCamera();
             projection = Matrix.CreatePerspectiveFieldOfView(MathHelper.PiOver4, GraphicsDevice.Viewport.AspectRatio, 0.001f, 1000f);
+        }
+
+        private void resetCamera()
+        {
+            camPosition = waterbody.GridPositionMax * 2;
+            camTarget = waterbody.GridPositionMin + ((waterbody.GridPositionMax - waterbody.GridPositionMin) / 2);
+            view = Matrix.CreateLookAt(camPosition, camTarget, Vector3.Up);
+            if (effect != null)
+            {
+                effect.View = view;
+            }
         }
 
         private void InitializeEffect()
@@ -194,6 +205,7 @@ namespace WaterPolygonizerDemo
             {
                 waterbody = new WaterBody();
                 polygonizer = new Polygonizer();
+                resetCamera();
             }
 
             if (keyboard.IsKeyDown(Keys.P))
@@ -218,8 +230,8 @@ namespace WaterPolygonizerDemo
 
             if (hasdrawn && !paused)
             {
-                waterbody.Update();
-                polygonizer.Update(waterbody.water);
+                waterbody.Update();                
+                polygonizer.Update(waterbody);
                 hasdrawn = false;
                 Count++;
             }
