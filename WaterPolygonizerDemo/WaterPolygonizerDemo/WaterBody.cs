@@ -15,6 +15,12 @@ namespace WaterPolygonizerDemo
 		Vector3 Gravity = new Vector3(0, -9.8f, 0);
 
 		float SimScale = 0.004f;
+
+        public float Scale
+        {
+            get { return SimScale; }
+        }
+
 		float Viscosity = 0.2f;
 		float RestDensity = 600f;
 		float ParticleMass = 0.00020543f;
@@ -26,9 +32,9 @@ namespace WaterPolygonizerDemo
 		float ExteriorDampening = 256f;
 		float SpeedLimit = 200f;
 
-        public float ParticleDiameter
+        public float Radius
         {
-            get { return 2 * ParticleRadius; }
+            get { return SmoothRadius; }
         }
 
 		float R2;
@@ -36,8 +42,8 @@ namespace WaterPolygonizerDemo
 		float SpikyKern;
 		float LapKern;
 
-        Vector3 Min = new Vector3(-15f, -15f, -15f);
-        Vector3 Max = new Vector3(15f, 15f, 15f);
+        Vector3 Min = new Vector3(-10f, -10f, -10f);
+        Vector3 Max = new Vector3(10f, 50f, 10f);
 
         public Vector3 PositionMin
         {
@@ -48,8 +54,8 @@ namespace WaterPolygonizerDemo
             get { return Max; }
         }
 
-		Vector3 InitMin = new Vector3(-2f, -10f, -2f);
-		Vector3 InitMax = new Vector3(2f, 14f, 2f);
+		Vector3 InitMin = new Vector3(0f, 0f, 0f);
+		Vector3 InitMax = new Vector3(10f, 50f, 10f);
 
 		//Vector3 Min = new Vector3(-25f, 0f, -25f);
 		//Vector3 Max = new Vector3(25f, 100f, 25f);
