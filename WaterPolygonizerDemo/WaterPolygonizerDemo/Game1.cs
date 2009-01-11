@@ -51,7 +51,7 @@ namespace WaterPolygonizerDemo
             Content.RootDirectory = "Content";
 
             waterbody = new WaterBody();
-            polygonizer = new Polygonizer();
+            polygonizer = new Polygonizer(waterbody);
 
             //AviWriter aviWriter = new AviWriter(this, "test.avi");
 
@@ -122,8 +122,8 @@ namespace WaterPolygonizerDemo
 
         private void resetCamera()
         {
-            camPosition = waterbody.GridPositionMax * 2;
-            camTarget = waterbody.GridPositionMin + ((waterbody.GridPositionMax - waterbody.GridPositionMin) / 2);
+            camPosition = waterbody.PositionMax * 2;
+            camTarget = waterbody.PositionMin + ((waterbody.PositionMax - waterbody.PositionMin) / 2);
             view = Matrix.CreateLookAt(camPosition, camTarget, Vector3.Up);
             if (effect != null)
             {
@@ -204,7 +204,7 @@ namespace WaterPolygonizerDemo
             if (keyboard.IsKeyDown(Keys.Space))
             {
                 waterbody = new WaterBody();
-                polygonizer = new Polygonizer();
+                polygonizer = new Polygonizer(waterbody);
                 resetCamera();
             }
 
@@ -231,7 +231,7 @@ namespace WaterPolygonizerDemo
             if (hasdrawn && !paused)
             {
                 waterbody.Update();                
-                polygonizer.Update(waterbody);
+                polygonizer.Update();
                 hasdrawn = false;
                 Count++;
             }
@@ -274,16 +274,19 @@ namespace WaterPolygonizerDemo
             graphics.GraphicsDevice.VertexDeclaration = vpcDeclaration;
             graphics.GraphicsDevice.Vertices[0].SetSource(waterVertexBuffer, 0, VertexPositionColor.SizeInBytes);
 
-            effect.Begin();
-            foreach (EffectPass pass in effect.CurrentTechnique.Passes)
+            if (polygonizer.Paused)
             {
-                pass.Begin();
-                graphics.GraphicsDevice.DrawPrimitives(PrimitiveType.PointList, 0, waterbody.water.Length);
-                pass.End();
+                effect.Begin();
+                foreach (EffectPass pass in effect.CurrentTechnique.Passes)
+                {
+                    pass.Begin();
+                    graphics.GraphicsDevice.DrawPrimitives(PrimitiveType.PointList, 0, waterbody.water.Length);
+                    pass.End();
+                }
+                effect.End();
             }
-            effect.End();
 
-            if (polygonizer.Vertices.Length > 0)
+            if (polygonizer.Vertices.Length > 0 && !polygonizer.Paused)
             {
                 graphics.GraphicsDevice.VertexDeclaration = vpntDeclaration;
                 effect.Begin();

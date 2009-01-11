@@ -14,7 +14,7 @@ namespace WaterPolygonizerDemo
 		float DT = 0.004f;
 		Vector3 Gravity = new Vector3(0, -9.8f, 0);
 
-		float SimScale = 0.012f;
+		float SimScale = 0.004f;
 		float Viscosity = 0.2f;
 		float RestDensity = 600f;
 		float ParticleMass = 0.00020543f;
@@ -26,16 +26,30 @@ namespace WaterPolygonizerDemo
 		float ExteriorDampening = 256f;
 		float SpeedLimit = 200f;
 
+        public float ParticleDiameter
+        {
+            get { return 2 * ParticleRadius; }
+        }
+
 		float R2;
 		float Poly6Kern;
 		float SpikyKern;
 		float LapKern;
 
-		Vector3 Min = new Vector3(-15f, 0f, -15f);
+        Vector3 Min = new Vector3(-15f, -15f, -15f);
         Vector3 Max = new Vector3(15f, 15f, 15f);
 
-		Vector3 InitMin = new Vector3(-12f, 5f, -12f);
-		Vector3 InitMax = new Vector3(-4f, 15f, -8f);
+        public Vector3 PositionMin
+        {
+            get { return Min; }
+        }
+        public Vector3 PositionMax
+        {
+            get { return Max; }
+        }
+
+		Vector3 InitMin = new Vector3(-2f, -10f, -2f);
+		Vector3 InitMax = new Vector3(2f, 14f, 2f);
 
 		//Vector3 Min = new Vector3(-25f, 0f, -25f);
 		//Vector3 Max = new Vector3(25f, 100f, 25f);
@@ -52,21 +66,6 @@ namespace WaterPolygonizerDemo
 		Vector3 GridMax;
 		Vector3 GridSize;
         Vector3 GridResolution = Vector3.Zero;
-
-        public Vector3 GridPositionMin
-        {
-            get { return GridMin; }
-        }
-        public Vector3 GridPositionMax
-        {
-            get { return GridMax; }
-        }
-
-        private Vector3 simCellSize;
-        public Vector3 CellSize
-        {
-            get { return simCellSize; }
-        }
 
 		public bool UseGrid = true;
 
@@ -137,7 +136,7 @@ namespace WaterPolygonizerDemo
 			GridSize.Y = (int)Math.Ceiling(GridResolution.Y * size);
 			GridSize.Z = (int)Math.Ceiling(GridResolution.Z * size);
 
-            simCellSize = GridSize / GridResolution;
+            //simCellSize = GridSize / GridResolution;
 
 			watergrid = new List<Water>[(int)GridSize.X, (int)GridSize.Y, (int)GridSize.Z];
 			for (int x = 0; x < (int)GridSize.X; ++x)
@@ -162,10 +161,13 @@ namespace WaterPolygonizerDemo
 			Vector3 delta = GridResolution / GridSize;
 			foreach (Water item in water)
 			{
-				watergrid[
-					(int)((item.Position.X - GridMin.X) * delta.X),
-					(int)((item.Position.Y - GridMin.Y) * delta.Y),
-					(int)((item.Position.Z - GridMin.Z) * delta.Z)].Add(item);
+                int x = (int)((item.Position.X - GridMin.X) * delta.X);
+				int y = (int)((item.Position.Y - GridMin.Y) * delta.Y);
+				int z = (int)((item.Position.Z - GridMin.Z) * delta.Z);
+                if( x >= 0 && y >= 0 && z >= 0 &&
+                    x < watergrid.GetLength(0) && y < watergrid.GetLength(1) && z < watergrid.GetLength(2)) {
+				    watergrid[x, y, z].Add(item);
+                }
 			}
 		}
 
