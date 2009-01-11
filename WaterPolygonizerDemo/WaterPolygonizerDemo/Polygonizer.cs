@@ -11,7 +11,7 @@ namespace WaterPolygonizerDemo
     {
         //public const float RANGE = 30;
         //private const float gridSize = RANGE / 32;
-        private const int GRID_DIMENSION = 128;
+        private const int GRID_DIMENSION = 64;
         private float cutOff = 1f;
         private Vector3 gridCellSize;
         private Vector3 gridCellSizeInv;
@@ -75,7 +75,11 @@ namespace WaterPolygonizerDemo
         private void updateGrid()
         {
             pointVal = 1f / waterBody.water.Length;
-            isoLevel = waterBody.ParticleDiameter;
+            //isoLevel = 1f / 2;
+            //isoLevel = 1f / gridCellSize / 2;
+            //isoLevel = 1.5f;
+
+            isoLevel = waterBody.Radius / waterBody.Scale;
 
             // Clear cells
 
@@ -157,7 +161,7 @@ namespace WaterPolygonizerDemo
                         foreach (Water w in waterGrid[x, y, z])
                         {    
                             float dist = Vector3.Distance(gridPoints[x, y, z] + (gridCellSize / 2), w.Position);
-                            if(dist <= cutOff)
+                            //if(dist <= cutOff)
                                 value += 1 / dist;
                         }
 
@@ -489,11 +493,11 @@ namespace WaterPolygonizerDemo
         {
             List<VertexPositionNormalTexture> vertexList = new List<VertexPositionNormalTexture>();
 
-            for (int x = 0; x < waterGrid.GetLength(0) - 1; ++x)
+            for (int x = 0; x < gridValues.GetLength(0) - 1; ++x)
             {
-                for (int y = 0; y < waterGrid.GetLength(1) - 1; ++y)
+                for (int y = 0; y < gridValues.GetLength(1) - 1; ++y)
                 {
-                    for (int z = 0; z < waterGrid.GetLength(2) - 1; ++z)
+                    for (int z = 0; z < gridValues.GetLength(2) - 1; ++z)
                     {
                         // Determine the index into the edge table which
                         // tells us which vertices are inside of the surface
