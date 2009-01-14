@@ -28,6 +28,8 @@ namespace WaterPolygonizerDemo
         VertexBuffer waterVertexBuffer;
         Polygonizer polygonizer;
 
+        VertexPositionNormalTexture[] floorVertices;
+
         Vector3 gravity = new Vector3(0f, -1f, 0f);
 
         bool hasdrawn = false;
@@ -53,6 +55,7 @@ namespace WaterPolygonizerDemo
 
             waterbody = new WaterBody();
             polygonizer = new Polygonizer(waterbody);
+            InitializeFloor();
 
             //AviWriter aviWriter = new AviWriter(this, "test.avi");
 
@@ -68,8 +71,20 @@ namespace WaterPolygonizerDemo
         protected override void Initialize()
         {
             // TODO: Add your initialization logic here
-
             base.Initialize();
+        }
+
+        private void InitializeFloor()
+        {
+            floorVertices = new VertexPositionNormalTexture[6];
+
+            floorVertices[0] = new VertexPositionNormalTexture(new Vector3(waterbody.PositionMax.X, waterbody.PositionMin.Y, waterbody.PositionMax.Z), Vector3.Up, Vector2.Zero);
+            floorVertices[1] = new VertexPositionNormalTexture(new Vector3(waterbody.PositionMin.X, waterbody.PositionMin.Y, waterbody.PositionMax.Z), Vector3.Up, Vector2.Zero);
+            floorVertices[2] = new VertexPositionNormalTexture(new Vector3(waterbody.PositionMin.X, waterbody.PositionMin.Y, waterbody.PositionMin.Z), Vector3.Up, Vector2.Zero);
+
+            floorVertices[3] = new VertexPositionNormalTexture(new Vector3(waterbody.PositionMax.X, waterbody.PositionMin.Y, waterbody.PositionMax.Z), Vector3.Up, Vector2.Zero);
+            floorVertices[4] = new VertexPositionNormalTexture(new Vector3(waterbody.PositionMin.X, waterbody.PositionMin.Y, waterbody.PositionMin.Z), Vector3.Up, Vector2.Zero);
+            floorVertices[5] = new VertexPositionNormalTexture(new Vector3(waterbody.PositionMax.X, waterbody.PositionMin.Y, waterbody.PositionMin.Z), Vector3.Up, Vector2.Zero);
         }
 
         /// <summary>
@@ -302,6 +317,21 @@ namespace WaterPolygonizerDemo
                 }
                 effect.End();
             }
+
+            // draw floor
+
+            graphics.GraphicsDevice.VertexDeclaration = vpntDeclaration;
+
+            effect.Parameters["materialColor"].SetValue(Color.Aqua.ToVector4());
+            effect.Begin();
+            foreach (EffectPass pass in effect.CurrentTechnique.Passes)
+            {
+                pass.Begin();
+                GraphicsDevice.DrawUserPrimitives<VertexPositionNormalTexture>(PrimitiveType.TriangleList, floorVertices, 0, 2);
+                pass.End();
+            }
+            effect.End();
+            effect.Parameters["materialColor"].SetValue(new Vector4(.0f, .5f, .8f, .4f));
 
             if (polygonizer.Vertices.Length > 0 && !polygonizer.Paused)
             {
