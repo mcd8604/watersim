@@ -33,7 +33,8 @@ namespace WaterPolygonizerDemo
         bool hasdrawn = false;
         bool paused = false;
 
-        BasicEffect effect;
+        //BasicEffect effect;
+        Effect effect;
 
         Vector3 camPosition;
         Vector3 camTarget;
@@ -122,32 +123,50 @@ namespace WaterPolygonizerDemo
 
         private void resetCamera()
         {
-            camPosition = waterbody.PositionMax * 2;
-            camTarget = waterbody.PositionMin + ((waterbody.PositionMax - waterbody.PositionMin) / 2);
+            //camPosition = waterbody.PositionMax * 2;
+            camPosition = new Vector3(30, 10, 30);
+            //camTarget = waterbody.PositionMin + ((waterbody.PositionMax - waterbody.PositionMin) / 2);
+            camTarget = new Vector3(0, -10, 0);
             view = Matrix.CreateLookAt(camPosition, camTarget, Vector3.Up);
             if (effect != null)
             {
-                effect.View = view;
+                //effect.View = view;
+                effect.Parameters["View"].SetValue(view);
             }
         }
 
         private void InitializeEffect()
         {
-            effect = new BasicEffect(GraphicsDevice, new EffectPool());
+            //effect = new BasicEffect(GraphicsDevice, new EffectPool());
 
-            effect.World = world;
-            effect.View = view;
-            effect.Projection = projection;
+            //effect.World = world;
+            //effect.View = view;
+            //effect.Projection = projection;
 
-            effect.EnableDefaultLighting();
+            //effect.EnableDefaultLighting();
 
-            effect.AmbientLightColor = new Vector3(0.0f, 0.0f, 0.2f);
+            //effect.AmbientLightColor = new Vector3(0.0f, 0.0f, 0.2f);
 
-            effect.DirectionalLight0.Enabled = true;
-            effect.DirectionalLight0.DiffuseColor = new Vector3(0.25f, .25f, .25f);
-            effect.DirectionalLight0.Direction = Vector3.Normalize(new Vector3(-1, 2, 1));
-            effect.DirectionalLight0.SpecularColor = new Vector3(0.75f, 0.75f, 75f);
+            //effect.DirectionalLight0.Enabled = true;
+            //effect.DirectionalLight0.DiffuseColor = new Vector3(0.25f, .25f, .25f);
+            //effect.DirectionalLight0.Direction = Vector3.Normalize(new Vector3(-1, 2, 1));
+            //effect.DirectionalLight0.SpecularColor = new Vector3(0.75f, 0.75f, 75f);
 
+            effect = Content.Load<Effect>("Basic");
+
+            effect.Parameters["World"].SetValue(world);
+            effect.Parameters["View"].SetValue(view);
+            effect.Parameters["Projection"].SetValue(projection);
+
+            effect.Parameters["lightPos"].SetValue(new Vector3(20f, 20f, 20f));
+            effect.Parameters["lightColor"].SetValue(Vector4.One);
+            effect.Parameters["cameraPos"].SetValue(camPosition);
+
+            effect.Parameters["ambientColor"].SetValue(new Vector4(.2f, .2f, .2f, 1f));
+            effect.Parameters["materialColor"].SetValue(new Vector4(.0f, .5f, .8f, .4f));
+            effect.Parameters["diffusePower"].SetValue(1f);
+            effect.Parameters["specularPower"].SetValue(1);
+            effect.Parameters["exponent"].SetValue(4);
         }
 
         /// <summary>
@@ -187,9 +206,7 @@ namespace WaterPolygonizerDemo
                 rotation += (curState.X - lastState.X) / (float)GraphicsDevice.Viewport.Width * MathHelper.TwoPi;
                 float y = (curState.Y - lastState.Y) / (float)GraphicsDevice.Viewport.Height * MathHelper.TwoPi;
                 //camRotation = Quaternion.CreateFromYawPitchRoll(x, y, 0);
-                camRotation = Quaternion.CreateFromAxisAngle(Vector3.UnitY, rotation);
-                view = Matrix.CreateLookAt(Vector3.Transform(camPosition, camRotation), camTarget, Vector3.Up);
-                effect.View = view;
+                resetCamera();
             }
 
             lastState = curState;
