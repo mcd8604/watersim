@@ -31,11 +31,14 @@ namespace WaterDemo
 		float SpikyKern;
 		float LapKern;
 
-		Vector3 Min = new Vector3(-15f, 0f, -15f);
-		Vector3 Max = new Vector3(15f, 100f, 15f);
+		internal Vector3 Min = new Vector3(-15f, 0f, -15f);
+		internal Vector3 Max = new Vector3(15f, 120f, 15f);
 
-		Vector3 InitMin = new Vector3(-12f, 0f, -12f);
-		Vector3 InitMax = new Vector3(-4f, 100f, -8f);
+		//Vector3 InitMin = new Vector3(-12f, 10f, -12f);
+		//Vector3 InitMax = new Vector3(-4f, 120f, -8f);
+
+		internal Vector3 InitMin = new Vector3(-14f, 0f, -14f);
+		internal Vector3 InitMax = new Vector3(14f, 5f, 14f);
 
 		//Vector3 Min = new Vector3(-25f, 0f, -25f);
 		//Vector3 Max = new Vector3(25f, 100f, 25f);
@@ -53,9 +56,15 @@ namespace WaterDemo
 		Vector3 GridSize;
 		Vector3 GridResolution = Vector3.Zero;
 
-		public bool UseGrid = true;
+		public bool UseGrid = false;
 
 		public Stopwatch timer;
+
+		internal List<BoundingBox> collidables = new List<BoundingBox>();
+
+		internal bool control = false;
+
+		internal List<Solid> solids = new List<Solid>();
 
 		public WaterBody()
 		{
@@ -66,6 +75,11 @@ namespace WaterDemo
 				SetupGrid();
 			}
 			timer = new Stopwatch();
+
+			//collidables.Add(new BoundingBox(-Min - new Vector3(10, 0, 10), -Min + new Vector3(0, 10, 0)));
+			collidables.Add(new BoundingBox(Min, Min + new Vector3(10, 10, 10)));
+
+			solids.Add(new Solid(new Vector3(0, 20, 0)));
 		}
 
 		private void CalcKernels()
@@ -129,7 +143,7 @@ namespace WaterDemo
 				{
 					for (int z = 0; z < (int)GridSize.Z; ++z)
 					{
-						watergrid[x,y,z] = new List<Water>();
+						watergrid[x, y, z] = new List<Water>();
 					}
 				}
 			}
@@ -168,12 +182,12 @@ namespace WaterDemo
 
 			doPressure();
 			doForces();
-			
+
 			doStuff();
 
 
 			timer.Stop();
-			Console.WriteLine( "Update: " + timer.Elapsed.TotalSeconds);
+			Console.WriteLine("Update: " + timer.Elapsed.TotalSeconds);
 			timer.Reset();
 		}
 
@@ -205,7 +219,7 @@ namespace WaterDemo
 				{
 					for (int z = 0; z < (int)GridSize.Z; ++z)
 					{
-						foreach (Water a in watergrid[x,y,z])
+						foreach (Water a in watergrid[x, y, z])
 						{
 							a.Neighbors.Clear();
 							foreach (Water b in watergrid[x, y, z])
@@ -611,6 +625,18 @@ namespace WaterDemo
 			float LimitSq = SpeedLimit * SpeedLimit;
 			float Epsilon = 0.00001f;
 
+			foreach (Solid solid in solids)
+			{
+				Vector3 nextVelocity = solid.Velocity + ((solid.Acceleration + Gravity) * DT);
+				solid.Acceleration = Vector3.Zero;
+
+				solid.VelocityEval = (solid.Velocity + nextVelocity) * 0.5f;
+				solid.Velocity = nextVelocity;
+
+				solid.LastPosition = solid.Position;
+				solid.Position += nextVelocity * (DT / SimScale);
+			}
+
 			foreach (Water a in water)
 			{
 				Vector3 acceleration = a.Force * ParticleMass;
@@ -668,12 +694,35 @@ namespace WaterDemo
 					acceleration.Z -= adjustment;
 				}
 
+				foreach (BoundingBox box in collidables)
+				{
+					if (box.Contains(a.Position) == ContainmentType.Contains)
+					{
+						a.color = new Color(a.color.ToVector4() + new Vector4(1, 0, 0, 0));
+					}
+				}
+
+				foreach (Solid solid in solids)
+				{
+					if (solid.BoundingSphere.Contains(a.Position) == ContainmentType.Contains)
+					{
+						diff = 2 * ParticleRadius - (solid.radius - Vector3.Distance(solid.Position, a.Position)) * SimScale;
+						acceleration += ExteriorStiffness * diff * Vector3.Normalize(a.Position - solid.Position);
+						solid.Acceleration += ExteriorStiffness * diff * Vector3.Normalize(solid.Position - a.Position);
+					}
+				}
+
+				if (control)
+				{
+					acceleration += Vector3.Normalize(a.ControlPosition - a.Position) * 10;
+				}
 
 				Vector3 nextVelocity = a.Velocity + ((acceleration + Gravity) * DT);
 
 				a.VelocityEval = (a.Velocity + nextVelocity) * 0.5f;
 				a.Velocity = nextVelocity;
 
+				a.LastPosition = a.Position;
 				a.Position += nextVelocity * (DT / SimScale);
 
 			}

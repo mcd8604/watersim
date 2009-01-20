@@ -40,12 +40,16 @@ namespace WaterDemo
 		bool hasdrawn = false;
 		bool paused = false;
 
+		VertexPositionNormalTexture[] floorVertices;
+		VertexDeclaration vpntDeclaration;
+
 		public Game1()
 		{
 			graphics = new GraphicsDeviceManager(this);
 			Content.RootDirectory = "Content";
 
 			waterbody = new WaterBody();
+			InitializeFloor();
 		}
 
 		/// <summary>
@@ -61,6 +65,19 @@ namespace WaterDemo
 			base.Initialize();
 		}
 
+		private void InitializeFloor()
+		{
+			floorVertices = new VertexPositionNormalTexture[6];
+
+			floorVertices[0] = new VertexPositionNormalTexture(new Vector3(waterbody.Max.X, waterbody.Min.Y, waterbody.Max.Z), Vector3.Up, Vector2.Zero);
+			floorVertices[1] = new VertexPositionNormalTexture(new Vector3(waterbody.Min.X, waterbody.Min.Y, waterbody.Max.Z), Vector3.Up, Vector2.Zero);
+			floorVertices[2] = new VertexPositionNormalTexture(new Vector3(waterbody.Min.X, waterbody.Min.Y, waterbody.Min.Z), Vector3.Up, Vector2.Zero);
+
+			floorVertices[3] = new VertexPositionNormalTexture(new Vector3(waterbody.Max.X, waterbody.Min.Y, waterbody.Max.Z), Vector3.Up, Vector2.Zero);
+			floorVertices[4] = new VertexPositionNormalTexture(new Vector3(waterbody.Min.X, waterbody.Min.Y, waterbody.Min.Z), Vector3.Up, Vector2.Zero);
+			floorVertices[5] = new VertexPositionNormalTexture(new Vector3(waterbody.Max.X, waterbody.Min.Y, waterbody.Min.Z), Vector3.Up, Vector2.Zero);
+		}
+
 		/// <summary>
 		/// LoadContent will be called once per game and is the place to load
 		/// all of your content.
@@ -74,6 +91,8 @@ namespace WaterDemo
 			InitializeTransform();
 			InitializeEffect();
 			InitializeVertices();
+
+			vpntDeclaration = new VertexDeclaration(GraphicsDevice, VertexPositionNormalTexture.VertexElements);
 
 			graphics.GraphicsDevice.RenderState.PointSize = 10;
 
@@ -130,7 +149,7 @@ namespace WaterDemo
             effect.Parameters["cameraPos"].SetValue(new Vector4(cameraPos, 1f));
 
             effect.Parameters["ambientColor"].SetValue(new Vector4(.2f, .2f, .2f, 1f));
-            effect.Parameters["materialColor"].SetValue(new Vector4(.0f, .5f, .8f, 1f));
+            //effect.Parameters["materialColor"].SetValue(new Vector4(.0f, .5f, .8f, 1f));
             effect.Parameters["diffusePower"].SetValue(1f);
             effect.Parameters["specularPower"].SetValue(1);
             effect.Parameters["exponent"].SetValue(8);
@@ -226,6 +245,8 @@ namespace WaterDemo
 				paused = false;
 			}
 
+			waterbody.control = keyboard.IsKeyDown(Keys.C);
+
 			if (hasdrawn && !paused)
 			{
 				waterbody.Update();
@@ -287,16 +308,41 @@ namespace WaterDemo
             //}
             //effect.End();
 
+			effect.Parameters["World"].SetValue(worldMatrix);
+
+			graphics.GraphicsDevice.VertexDeclaration = vpntDeclaration;
+
+			effect.Parameters["materialColor"].SetValue(Color.Blue.ToVector4());
+			effect.Begin();
+			foreach (EffectPass pass in effect.CurrentTechnique.Passes)
+			{
+				pass.Begin();
+				GraphicsDevice.DrawUserPrimitives<VertexPositionNormalTexture>(PrimitiveType.TriangleList, floorVertices, 0, 2);
+				pass.End();
+			}
+			effect.End();
+
             graphics.GraphicsDevice.VertexDeclaration = basicEffectVertexDeclaration;
             foreach (Water w in waterbody.water)
             {
+            	effect.Parameters["materialColor"].SetValue(w.color.ToVector4());
                 effect.Parameters["World"].SetValue(Matrix.Multiply(scale, Matrix.CreateTranslation(w.Position)));
                 foreach (ModelMesh mesh in model.Meshes)
                 {
                     mesh.Draw();
                 }
             }
-            effect.Parameters["World"].SetValue(worldMatrix);
+
+			foreach (Solid solid in waterbody.solids)
+			{
+				effect.Parameters["materialColor"].SetValue(Color.White.ToVector4());
+				effect.Parameters["World"].SetValue(Matrix.Multiply(Matrix.CreateScale(2), Matrix.CreateTranslation(solid.Position)));
+				foreach (ModelMesh mesh in model.Meshes)
+				{
+					mesh.Draw();
+				}
+			}
+
 
 			base.Draw(gameTime);
 		}

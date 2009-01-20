@@ -19,13 +19,18 @@ namespace WaterDemo
 		internal float pressure;
 		internal float density;
 
-		internal Color color = Color.White;
+		internal Color color = new Color(new Vector4(.0f, .5f, .8f, 1f));
 
 		internal List<Water> Neighbors = new List<Water>();
 
 		public Water(Vector3 startPosition)
 		{
+			ControlPosition = startPosition + new Vector3(0, Vector3.Distance(startPosition, Vector3.Zero), 0);
+			LastPosition = startPosition;
 			Position = startPosition;
 		}
+
+		internal Vector3 ControlPosition = Vector3.Zero;
+		internal Vector3 LastPosition = Vector3.Zero;
 	}
 }
