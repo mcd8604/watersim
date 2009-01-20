@@ -34,11 +34,11 @@ namespace WaterDemo
 		internal Vector3 Min = new Vector3(-15f, 0f, -15f);
 		internal Vector3 Max = new Vector3(15f, 120f, 15f);
 
-		//Vector3 InitMin = new Vector3(-12f, 10f, -12f);
-		//Vector3 InitMax = new Vector3(-4f, 120f, -8f);
+		Vector3 InitMin2 = new Vector3(-12f, 100f, -12f);
+		Vector3 InitMax2 = new Vector3(-4f, 200f, -8f);
 
 		internal Vector3 InitMin = new Vector3(-14f, 0f, -14f);
-		internal Vector3 InitMax = new Vector3(14f, 5f, 14f);
+		internal Vector3 InitMax = new Vector3(14f, 6f, 14f);
 
 		//Vector3 Min = new Vector3(-25f, 0f, -25f);
 		//Vector3 Max = new Vector3(25f, 100f, 25f);
@@ -112,13 +112,28 @@ namespace WaterDemo
 				}
 			}
 
+			//for (float z = InitMin2.Z; z <= InitMax2.Z; z += delta)
+			//{
+			//    for (float y = InitMin2.Y; y <= InitMax2.Y; y += delta)
+			//    {
+			//        for (float x = InitMin2.X; x <= InitMax2.X; x += delta)
+			//        {
+			//            Water p = new Water(new Vector3(x, y, z));
+			//            p.Position.X += -0.05f + ((float)Rand.NextDouble() * 0.1f);
+			//            p.Position.Y += -0.05f + ((float)Rand.NextDouble() * 0.1f);
+			//            p.Position.Z += -0.05f + ((float)Rand.NextDouble() * 0.1f);
+			//            list.Add(p);
+			//        }
+			//    }
+			//}
+
 			water = list.ToArray();
 		}
 
 		private void SetupGrid()
 		{
 			float cellsize = SmoothRadius * 2;
-			double res = SimScale / cellsize;
+			double res = SimScale / cellsize; 
 			double size = cellsize / SimScale;
 
 			GridMin = Min;
@@ -707,8 +722,8 @@ namespace WaterDemo
 					if (solid.BoundingSphere.Contains(a.Position) == ContainmentType.Contains)
 					{
 						diff = 2 * ParticleRadius - (solid.radius - Vector3.Distance(solid.Position, a.Position)) * SimScale;
-						acceleration += ExteriorStiffness * diff * Vector3.Normalize(a.Position - solid.Position);
-						solid.Acceleration += ExteriorStiffness * diff * Vector3.Normalize(solid.Position - a.Position);
+						acceleration += ExteriorStiffness * diff * Vector3.Normalize(a.Position - solid.Position) * 1f;
+						solid.Acceleration += ExteriorStiffness * diff * Vector3.Normalize(solid.Position - a.Position) * (1/128f);
 					}
 				}
 

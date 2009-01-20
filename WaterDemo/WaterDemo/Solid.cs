@@ -14,7 +14,7 @@ namespace WaterDemo
 
 		internal Vector3 Acceleration = Vector3.Zero;
 
-		internal float radius = 2;
+		internal float radius = 10;
 
 		internal BoundingSphere BoundingSphere
 		{
