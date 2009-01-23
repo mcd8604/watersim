@@ -4,10 +4,11 @@ using System.Text;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System.Diagnostics;
+using RayTracer;
 
 namespace WaterPolygonizerDemo
 {
-    class Polygonizer
+    class Polygonizer : RayTraceable
     {
         //public const float RANGE = 30;
         //private const float gridSize = RANGE / 32;
@@ -24,8 +25,11 @@ namespace WaterPolygonizerDemo
 
         private Vector3[, ,] gridPoints;
         private float[, ,] gridValues;
+        private List<Plane>[, ,] gridTris;
 
         private WaterBody waterBody;
+
+        private BoundingBox boundingBox;
 
         private VertexPositionNormalTexture[] vertices = new VertexPositionNormalTexture[0];
         public VertexPositionNormalTexture[] Vertices
@@ -53,8 +57,11 @@ namespace WaterPolygonizerDemo
             gridCellSize = (waterBody.PositionMax - waterBody.PositionMin) / GRID_DIMENSION;
             gridCellSizeInv = new Vector3(1 / gridCellSize.X, 1 / gridCellSize.Y, 1 / gridCellSize.Z);
 
+            boundingBox = new BoundingBox(waterBody.PositionMin, waterBody.PositionMax);
+
             gridPoints = new Vector3[GRID_DIMENSION, GRID_DIMENSION, GRID_DIMENSION];
             gridValues = new float[GRID_DIMENSION, GRID_DIMENSION, GRID_DIMENSION];
+            gridTris = new List<Plane>[GRID_DIMENSION, GRID_DIMENSION, GRID_DIMENSION];
             waterGrid = new List<Water>[GRID_DIMENSION, GRID_DIMENSION, GRID_DIMENSION];
 
             for (int x = 0; x < GRID_DIMENSION; ++x)
@@ -69,6 +76,8 @@ namespace WaterPolygonizerDemo
                             waterBody.PositionMin.Z + z * gridCellSize.Z);
 
                         waterGrid[x, y, z] = new List<Water>();
+
+                        gridTris[x, y, z] = new List<Plane>();
                     }
                 }
             }
@@ -498,6 +507,9 @@ namespace WaterPolygonizerDemo
                 {
                     for (int z = 0; z < gridValues.GetLength(2) - 1; ++z)
                     {
+
+                        gridTris[x, y, z].Clear();
+
                         // Determine the index into the edge table which
                         // tells us which vertices are inside of the surface
 
@@ -602,17 +614,29 @@ namespace WaterPolygonizerDemo
                                 intersections[11] = VertexInterp(isolevel, vertex4, vertex8, value4, value8);
                             }
 
-                            // Create the triangle
+                            // Create the triangles
                             for (int i = 0; triTable[cubeindex, i] != -1; i += 3)
                             {
-                                Vector3 triVector1 = intersections[triTable[cubeindex, i]];
-                                Vector3 triVector2 = intersections[triTable[cubeindex, i + 1]];
-                                Vector3 triVector3 = intersections[triTable[cubeindex, i + 2]];
-                                Vector3 normal = new Plane(triVector3, triVector2, triVector1).Normal;
+                                //Tri t = new Tri();
+                                //t.pt1 = intersections[triTable[cubeindex, i]];
+                                //t.pt2 = intersections[triTable[cubeindex, i + 1]];
+                                //t.pt3 = intersections[triTable[cubeindex, i + 2]];
+                                //t.normal = new Plane(t.pt3, t.pt2, t.pt1).Normal;
+                                //t.normal.Normalize();
+                                //gridTris[x, y, z].Add(t); 
+                                
+                                Vector3 v1 = intersections[triTable[cubeindex, i]];
+                                Vector3 v2 = intersections[triTable[cubeindex, i + 1]];
+                                Vector3 v3 = intersections[triTable[cubeindex, i + 2]];
+                                Plane p = new Plane(v1, v2, v3);
+                                Vector3 normal = p.Normal;
                                 normal.Normalize();
-                                vertexList.Add(new VertexPositionNormalTexture(triVector1, normal, Vector2.Zero));
-                                vertexList.Add(new VertexPositionNormalTexture(triVector2, normal, Vector2.Zero));
-                                vertexList.Add(new VertexPositionNormalTexture(triVector3, normal, Vector2.Zero));
+                                gridTris[x, y, z].Add(p);
+
+                                vertexList.Add(new VertexPositionNormalTexture(v1, normal, Vector2.Zero));
+                                vertexList.Add(new VertexPositionNormalTexture(v2, normal, Vector2.Zero));
+                                vertexList.Add(new VertexPositionNormalTexture(v3, normal, Vector2.Zero));
+                                
                             }
                         }
                     }
@@ -698,5 +722,67 @@ namespace WaterPolygonizerDemo
             }
         }
 
+
+        public override Vector3 Center
+        {
+            get
+            {
+                throw new NotImplementedException();
+            }
+            set
+            {
+                throw new NotImplementedException();
+            }
+        }
+
+        public override float? Intersects(Ray ray)
+        {
+            float? macroDist = ray.Intersects(boundingBox);
+
+            if (macroDist != null)
+            {
+                // travel along the ray until we find a cell with a value
+
+                float delta = gridCellSize.X;
+                float curDist = (float)macroDist;
+                Vector3 microIntersection;
+                int xIndex;
+                int yIndex;
+                int zIndex;
+                ContainmentType containType;
+
+                do
+                {
+                    microIntersection = ray.Position + (ray.Direction * curDist);
+                    xIndex = (int)Math.Min(Math.Max(0, ((microIntersection.X - waterBody.PositionMin.X) / gridCellSize.X)), gridValues.GetLength(0) - 1);
+                    yIndex = (int)Math.Min(Math.Max(0, ((microIntersection.Y - waterBody.PositionMin.Y) / gridCellSize.Y)), gridValues.GetLength(1) - 1);
+                    zIndex = (int)Math.Min(Math.Max(0, ((microIntersection.Z - waterBody.PositionMin.Z) / gridCellSize.Z)), gridValues.GetLength(2) - 1);
+
+                    if (gridTris[xIndex, yIndex, zIndex].Count > 0)
+                    {
+                        foreach (Plane p in gridTris[xIndex, yIndex, zIndex])
+                        {
+                            float? pDist = ray.Intersects(p);
+                            if (pDist != null)
+                            {
+                                lastIntersectedPlane = p;
+                                return pDist;
+                            }
+                        }
+                    }
+
+                    curDist += delta;
+                    containType = boundingBox.Contains(microIntersection);
+                } while (containType == ContainmentType.Contains || containType == ContainmentType.Intersects);
+            }
+            return null;
+        }
+
+        Plane lastIntersectedPlane;
+
+        public override Vector3 GetIntersectNormal(Vector3 intersectPoint)
+        {
+            return lastIntersectedPlane.Normal;
+        }
     }
 }
