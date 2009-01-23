@@ -5,6 +5,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WaterPolygonizerDemo", "Wat
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AviAccess", "AviAccess\AviAccess.csproj", "{A06205FC-A4DF-42CE-B163-E55DD6E24A4D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RayTracer", "RayTracer\RayTracer.csproj", "{236E93C0-C875-43C3-9ACA-32FBFC957BF4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x86 = Debug|x86
@@ -15,14 +17,20 @@ Global
 		{257139B5-09C7-482F-B625-5EECC4BBB0CC}.Debug|x86.Build.0 = Debug|x86
 		{257139B5-09C7-482F-B625-5EECC4BBB0CC}.Release|x86.ActiveCfg = Release|x86
 		{257139B5-09C7-482F-B625-5EECC4BBB0CC}.Release|x86.Build.0 = Release|x86
-		{25B19957-FA57-4672-9C0A-301CA9C0683E}.Debug|x86.ActiveCfg = Debug|x86
-		{25B19957-FA57-4672-9C0A-301CA9C0683E}.Release|x86.ActiveCfg = Release|x86
 		{A06205FC-A4DF-42CE-B163-E55DD6E24A4D}.Debug|x86.ActiveCfg = Debug|x86
 		{A06205FC-A4DF-42CE-B163-E55DD6E24A4D}.Debug|x86.Build.0 = Debug|x86
 		{A06205FC-A4DF-42CE-B163-E55DD6E24A4D}.Release|x86.ActiveCfg = Release|x86
 		{A06205FC-A4DF-42CE-B163-E55DD6E24A4D}.Release|x86.Build.0 = Release|x86
+		{25B19957-FA57-4672-9C0A-301CA9C0683E}.Debug|x86.ActiveCfg = Debug|x86
+		{25B19957-FA57-4672-9C0A-301CA9C0683E}.Release|x86.ActiveCfg = Release|x86
 		{310833EE-A08C-4581-991D-9F288F21F48C}.Debug|x86.ActiveCfg = Debug|x86
 		{310833EE-A08C-4581-991D-9F288F21F48C}.Release|x86.ActiveCfg = Release|x86
+		{236E93C0-C875-43C3-9ACA-32FBFC957BF4}.Debug|x86.ActiveCfg = Debug|x86
+		{236E93C0-C875-43C3-9ACA-32FBFC957BF4}.Debug|x86.Build.0 = Debug|x86
+		{236E93C0-C875-43C3-9ACA-32FBFC957BF4}.Release|x86.ActiveCfg = Release|x86
+		{236E93C0-C875-43C3-9ACA-32FBFC957BF4}.Release|x86.Build.0 = Release|x86
+		{768FF59E-01EF-47A8-9BD8-2923FC01F88D}.Debug|x86.ActiveCfg = Debug|x86
+		{768FF59E-01EF-47A8-9BD8-2923FC01F88D}.Release|x86.ActiveCfg = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
