@@ -610,8 +610,8 @@ namespace WaterPolygonizerDemo
                             for (int i = 0; triTable[cubeindex, i] != -1; i += 3)
                             {
                                 Vector3 normal = Vector3.Cross(
-                                    intersections[triTable[cubeindex, i + 1]] - intersections[triTable[cubeindex, i]], 
-                                    intersections[triTable[cubeindex, i + 2]] - intersections[triTable[cubeindex, i]]
+                                    intersections[triTable[cubeindex, i + 2]] - intersections[triTable[cubeindex, i]], 
+                                    intersections[triTable[cubeindex, i + 1]] - intersections[triTable[cubeindex, i]]
                                     );
                                 normal.Normalize();
 
