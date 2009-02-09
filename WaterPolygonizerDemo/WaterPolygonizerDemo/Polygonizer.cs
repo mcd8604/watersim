@@ -505,8 +505,6 @@ namespace WaterPolygonizerDemo
                         // Determine the index into the edge table which
                         // tells us which vertices are inside of the surface
 
-                        Vector3[] intersections = new Vector3[12];
-
                         //float value1 = waterBody.watergrid[x, y, z].Count * pointVal;
                         //float value2 = waterBody.watergrid[x + 1, y, z].Count * pointVal;
                         //float value3 = waterBody.watergrid[x + 1, y, z + 1].Count * pointVal;
@@ -556,6 +554,8 @@ namespace WaterPolygonizerDemo
                             //Vector3 vertex6 = waterBody.GridPositionMin + Vector3.Multiply(new Vector3(x + 1, y + 1, z), waterBody.CellSize);;
                             //Vector3 vertex7 = waterBody.GridPositionMin + Vector3.Multiply(new Vector3(x + 1, y + 1, z + 1), waterBody.CellSize);;
                             //Vector3 vertex8 = waterBody.GridPositionMin + Vector3.Multiply(new Vector3(x, y + 1, z + 1), waterBody.CellSize);;
+
+                            Vector3[] intersections = new Vector3[12];
 
                             if ((edgeTable[cubeindex] & 1) == 1)
                             {
