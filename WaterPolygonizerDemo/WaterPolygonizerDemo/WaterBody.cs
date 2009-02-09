@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Text;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
@@ -9,10 +8,10 @@ namespace WaterPolygonizerDemo
 {
 	class WaterBody
 	{
-		Random Rand = new Random();
+		readonly Random Rand = new Random();
 
 		float DT = 0.004f;
-		Vector3 Gravity = new Vector3(0, -9.8f, 0);
+		readonly Vector3 Gravity = new Vector3(0, -9.8f, 0);
 
 		float SimScale = 0.004f;
 
@@ -74,9 +73,9 @@ namespace WaterPolygonizerDemo
         Vector3 GridResolution = Vector3.Zero;
 
 		public bool UseGrid = true;
-
+#if DEBUG
 		public Stopwatch timer;
-
+#endif
 		public WaterBody()
 		{
 			CalcKernels();
@@ -85,7 +84,9 @@ namespace WaterPolygonizerDemo
 			{
 				SetupGrid();
 			}
+#if DEBUG
 			timer = new Stopwatch();
+#endif
 		}
 
 		private void CalcKernels()
@@ -179,7 +180,10 @@ namespace WaterPolygonizerDemo
 
 		public void Update()
 		{
+#if DEBUG
+			timer.Reset();
 			timer.Start();
+#endif
 
 			if (UseGrid)
 			{
@@ -196,10 +200,9 @@ namespace WaterPolygonizerDemo
 			
 			doStuff();
 
-
+#if DEBUG
 			timer.Stop();
-			//Console.WriteLine( "Update: " + timer.Elapsed.TotalSeconds);
-			timer.Reset();
+#endif
 		}
 
 		private void findNeighbors()

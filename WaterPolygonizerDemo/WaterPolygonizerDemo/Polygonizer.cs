@@ -29,11 +29,10 @@ namespace WaterPolygonizerDemo
 
         private BoundingBox boundingBox;
 
-        private VertexPositionNormalTexture[] vertices = new VertexPositionNormalTexture[0];
-        public VertexPositionNormalTexture[] Vertices
-        {
-            get { return vertices; }
-        }
+		// We know this is going to be a long list, give it a large-ish initial capacity to reduce re-allocs
+		public readonly List<VertexPositionNormalTexture> vertexList = new List<VertexPositionNormalTexture>(1 << 16);
+
+		private readonly Vector3[] intersections = new Vector3[12];
 
         private bool paused = false;
         public bool Paused
@@ -492,9 +491,9 @@ namespace WaterPolygonizerDemo
         /// Credit: Paul Bourke - http://local.wasp.uwa.edu.au/~pbourke/geometry/
         /// </remarks>
         /// <param name="isolevel"></param>
-        void Polygonise(WaterBody waterBody, float isolevel)
+        void Polygonise(float isolevel)
         {
-            List<VertexPositionNormalTexture> vertexList = new List<VertexPositionNormalTexture>();
+			vertexList.Clear();
 
             for (int x = 0; x < gridValues.GetLength(0) - 1; ++x)
             {
@@ -555,56 +554,20 @@ namespace WaterPolygonizerDemo
                             //Vector3 vertex7 = waterBody.GridPositionMin + Vector3.Multiply(new Vector3(x + 1, y + 1, z + 1), waterBody.CellSize);;
                             //Vector3 vertex8 = waterBody.GridPositionMin + Vector3.Multiply(new Vector3(x, y + 1, z + 1), waterBody.CellSize);;
 
-                            Vector3[] intersections = new Vector3[12];
 
-                            if ((edgeTable[cubeindex] & 1) == 1)
-                            {
-                                intersections[0] = VertexInterp(isolevel, gridPoints[x, y, z], gridPoints[x + 1, y, z], value1, value2);
-                            }
-                            if ((edgeTable[cubeindex] & 2) == 2)
-                            {
-                                intersections[1] = VertexInterp(isolevel, gridPoints[x + 1, y, z], gridPoints[x + 1, y, z + 1], value2, value3);
-                            }
-                            if ((edgeTable[cubeindex] & 4) == 4)
-                            {
-                                intersections[2] = VertexInterp(isolevel, gridPoints[x + 1, y, z + 1], gridPoints[x, y, z + 1], value3, value4);
-                            }
-                            if ((edgeTable[cubeindex] & 8) == 8)
-                            {
-                                intersections[3] = VertexInterp(isolevel, gridPoints[x, y, z + 1], gridPoints[x, y, z], value4, value1);
-                            }
-                            if ((edgeTable[cubeindex] & 16) == 16)
-                            {
-                                intersections[4] = VertexInterp(isolevel, gridPoints[x, y + 1, z], gridPoints[x + 1, y + 1, z], value5, value6);
-                            }
-                            if ((edgeTable[cubeindex] & 32) == 32)
-                            {
-                                intersections[5] = VertexInterp(isolevel, gridPoints[x + 1, y + 1, z], gridPoints[x + 1, y + 1, z + 1], value6, value7);
-                            }
-                            if ((edgeTable[cubeindex] & 64) == 64)
-                            {
-                                intersections[6] = VertexInterp(isolevel, gridPoints[x + 1, y + 1, z + 1], gridPoints[x, y + 1, z + 1], value7, value8);
-                            }
-                            if ((edgeTable[cubeindex] & 128) == 128)
-                            {
-                                intersections[7] = VertexInterp(isolevel, gridPoints[x, y + 1, z + 1], gridPoints[x, y + 1, z], value8, value5);
-                            }
-                            if ((edgeTable[cubeindex] & 256) == 256)
-                            {
-                                intersections[8] = VertexInterp(isolevel, gridPoints[x, y, z], gridPoints[x, y + 1, z], value1, value5);
-                            }
-                            if ((edgeTable[cubeindex] & 512) == 512)
-                            {
-                                intersections[9] = VertexInterp(isolevel, gridPoints[x + 1, y, z], gridPoints[x + 1, y + 1, z], value2, value6);
-                            }
-                            if ((edgeTable[cubeindex] & 1024) == 1024)
-                            {
-                                intersections[10] = VertexInterp(isolevel, gridPoints[x + 1, y, z + 1], gridPoints[x + 1, y + 1, z + 1], value3, value7);
-                            }
-                            if ((edgeTable[cubeindex] & 2048) == 2048)
-                            {
-                                intersections[11] = VertexInterp(isolevel, gridPoints[x, y, z + 1], gridPoints[x, y + 1, z + 1], value4, value8);
-                            }
+
+							intersections[0] = (edgeTable[cubeindex] & 1) != 0 ? VertexInterp(isolevel, gridPoints[x, y, z], gridPoints[x + 1, y, z], value1, value2) : Vector3.Zero;
+                        	intersections[1] = (edgeTable[cubeindex] & 2) != 0 ? VertexInterp(isolevel, gridPoints[x + 1, y, z], gridPoints[x + 1, y, z + 1], value2, value3) : Vector3.Zero;
+							intersections[2] = (edgeTable[cubeindex] & 4) != 0 ? VertexInterp(isolevel, gridPoints[x + 1, y, z + 1], gridPoints[x, y, z + 1], value3, value4) : Vector3.Zero;
+							intersections[3] = (edgeTable[cubeindex] & 8) != 0 ? VertexInterp(isolevel, gridPoints[x, y, z + 1], gridPoints[x, y, z], value4, value1) : Vector3.Zero;
+							intersections[4] = (edgeTable[cubeindex] & 16) != 0 ? VertexInterp(isolevel, gridPoints[x, y + 1, z], gridPoints[x + 1, y + 1, z], value5, value6) : Vector3.Zero;
+							intersections[5] = (edgeTable[cubeindex] & 32) != 0 ? VertexInterp(isolevel, gridPoints[x + 1, y + 1, z], gridPoints[x + 1, y + 1, z + 1], value6, value7) : Vector3.Zero;
+							intersections[6] = (edgeTable[cubeindex] & 64) != 0 ? VertexInterp(isolevel, gridPoints[x + 1, y + 1, z + 1], gridPoints[x, y + 1, z + 1], value7, value8) : Vector3.Zero;
+							intersections[7] = (edgeTable[cubeindex] & 128) != 0 ? VertexInterp(isolevel, gridPoints[x, y + 1, z + 1], gridPoints[x, y + 1, z], value8, value5) : Vector3.Zero;
+							intersections[8] = (edgeTable[cubeindex] & 256) != 0 ? VertexInterp(isolevel, gridPoints[x, y, z], gridPoints[x, y + 1, z], value1, value5) : Vector3.Zero;
+							intersections[9] = (edgeTable[cubeindex] & 512) != 0 ? VertexInterp(isolevel, gridPoints[x + 1, y, z], gridPoints[x + 1, y + 1, z], value2, value6) : Vector3.Zero;
+							intersections[10] = (edgeTable[cubeindex] & 1024) != 0 ? VertexInterp(isolevel, gridPoints[x + 1, y, z + 1], gridPoints[x + 1, y + 1, z + 1], value3, value7) : Vector3.Zero;
+							intersections[11] = (edgeTable[cubeindex] & 2048) != 0 ? VertexInterp(isolevel, gridPoints[x, y, z + 1], gridPoints[x, y + 1, z + 1], value4, value8) : Vector3.Zero;
 
                             // Create the triangles
                             for (int i = 0; triTable[cubeindex, i] != -1; i += 3)
@@ -641,8 +604,6 @@ namespace WaterPolygonizerDemo
                 avgNormal.Normalize();
                 averagedVertexList.Add(new VertexPositionNormalTexture(v.Position, avgNormal, v.TextureCoordinate));
             }*/
-
-            vertices = vertexList.ToArray();
         }
 
         /// <summary>
@@ -655,7 +616,7 @@ namespace WaterPolygonizerDemo
         /// <param name="v1Value"></param>
         /// <param name="v2Value"></param>
         /// <returns></returns>
-        Vector3 VertexInterp(float isolevel, Vector3 v1, Vector3 v2, float v1Value, float v2Value)
+        private static Vector3 VertexInterp(float isolevel, Vector3 v1, Vector3 v2, float v1Value, float v2Value)
         {
             return Vector3.Lerp(v1, v2, (isolevel - v1Value) / (v2Value - v1Value));
         }
@@ -694,7 +655,7 @@ namespace WaterPolygonizerDemo
                 sw.Start();
 #endif
 
-                Polygonise(waterBody, isoLevel);
+                Polygonise(isoLevel);
 
 #if DEBUG
                 sw.Stop();
