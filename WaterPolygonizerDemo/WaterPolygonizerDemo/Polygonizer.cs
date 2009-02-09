@@ -24,7 +24,6 @@ namespace WaterPolygonizerDemo
 
         private Vector3[, ,] gridPoints;
         private float[, ,] gridValues;
-        private List<Plane>[, ,] gridTris;
 
         private WaterBody waterBody;
 
@@ -60,7 +59,6 @@ namespace WaterPolygonizerDemo
 
             gridPoints = new Vector3[GRID_DIMENSION, GRID_DIMENSION, GRID_DIMENSION];
             gridValues = new float[GRID_DIMENSION, GRID_DIMENSION, GRID_DIMENSION];
-            gridTris = new List<Plane>[GRID_DIMENSION, GRID_DIMENSION, GRID_DIMENSION];
             waterGrid = new List<Water>[GRID_DIMENSION, GRID_DIMENSION, GRID_DIMENSION];
 
             for (int x = 0; x < GRID_DIMENSION; ++x)
@@ -75,8 +73,6 @@ namespace WaterPolygonizerDemo
                             waterBody.PositionMin.Z + z * gridCellSize.Z);
 
                         waterGrid[x, y, z] = new List<Water>();
-
-                        gridTris[x, y, z] = new List<Plane>();
                     }
                 }
             }
@@ -506,9 +502,6 @@ namespace WaterPolygonizerDemo
                 {
                     for (int z = 0; z < gridValues.GetLength(2) - 1; ++z)
                     {
-
-                        gridTris[x, y, z].Clear();
-
                         // Determine the index into the edge table which
                         // tells us which vertices are inside of the surface
 
