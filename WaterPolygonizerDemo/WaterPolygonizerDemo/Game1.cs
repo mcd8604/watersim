@@ -1,3 +1,6 @@
+// Change to #define to enforce minimum memory usage - kills CPU
+#undef FORCE_MINIMUM_MEMORY_USAGE
+
 using System;
 using System.Collections.Generic;
 using Microsoft.Xna.Framework;
@@ -19,7 +22,9 @@ namespace WaterPolygonizerDemo
     public class Game1 : Microsoft.Xna.Framework.Game
     {
         GraphicsDeviceManager graphics;
+#if DEBUG
         SpriteBatch spriteBatch;
+#endif
 
         WaterBody waterbody;
         VertexPositionColor[] waterPoints;
@@ -49,6 +54,10 @@ namespace WaterPolygonizerDemo
         SpriteFont font;
 
         AviWriter aviWriter;
+
+#if DEBUG
+    	private int framecount = 0;
+#endif
 
         public Game1()
         {
@@ -116,8 +125,10 @@ namespace WaterPolygonizerDemo
         /// </summary>
         protected override void LoadContent()
         {
+#if DEBUG
             // Create a new SpriteBatch, which can be used to draw textures.
             spriteBatch = new SpriteBatch(GraphicsDevice);
+#endif
 
             // TODO: use this.Content to load your game content here
             GraphicsDevice.RenderState.PointSize = 5f;
@@ -209,11 +220,9 @@ namespace WaterPolygonizerDemo
         /// <param name="gameTime">Provides a snapshot of timing values.</param>
         protected override void Update(GameTime gameTime)
         {
-            // Allows the game to exit
-            if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed)
-                this.Exit();
-
-            // TODO: Add your update logic here           
+#if FORCE_MINIMUM_MEMORY_USAGE
+			GC.Collect();
+#endif
 
             curState = Mouse.GetState();
 
@@ -345,14 +354,14 @@ namespace WaterPolygonizerDemo
             }
             effect.Parameters["materialColor"].SetValue(new Vector4(.5f, .6f, .9f, .2f));
 
-            if (polygonizer.Vertices.Length > 0 && !polygonizer.Paused)
+			if (polygonizer.vertexList.Count > 0 && !polygonizer.Paused)
             {
                 graphics.GraphicsDevice.VertexDeclaration = vpntDeclaration;
                 effect.Begin();
                 foreach (EffectPass pass in effect.CurrentTechnique.Passes)
                 {
                     pass.Begin();
-                    GraphicsDevice.DrawUserPrimitives<VertexPositionNormalTexture>(PrimitiveType.TriangleList, polygonizer.Vertices, 0, polygonizer.Vertices.Length / 3);
+					GraphicsDevice.DrawUserPrimitives<VertexPositionNormalTexture>(PrimitiveType.TriangleList, polygonizer.vertexList.ToArray(), 0, polygonizer.vertexList.Count / 3);
                     pass.End();
                 }
                 effect.End();
@@ -361,8 +370,10 @@ namespace WaterPolygonizerDemo
             base.Draw(gameTime);
 #if DEBUG
             spriteBatch.Begin();
-            spriteBatch.DrawString(font, "Grid Time: " + polygonizer.GridTime, Vector2.Zero, Color.White);
-            spriteBatch.DrawString(font, "Poly Time: " + polygonizer.PolyTime, new Vector2(0, 24), Color.White);
+			spriteBatch.DrawString(font, "Phys Time: " + waterbody.timer.Elapsed.TotalSeconds, Vector2.Zero, Color.White);
+			spriteBatch.DrawString(font, "Grid Time: " + polygonizer.GridTime, new Vector2(0, 24), Color.White);
+            spriteBatch.DrawString(font, "Poly Time: " + polygonizer.PolyTime, new Vector2(0, 48), Color.White);
+			spriteBatch.DrawString(font, "Frames:    " + (++framecount), new Vector2(0, 72), Color.White);
             spriteBatch.End();
 #endif
         }
