@@ -12,7 +12,7 @@ namespace WaterPolygonizerDemo
     {
         //public const float RANGE = 30;
         //private const float gridSize = RANGE / 32;
-        private const int GRID_DIMENSION = 64;
+        private const int GRID_DIMENSION = 128;
         //private float cutOff = 2f;
         private Vector3 gridCellSize;
         private Vector3 gridCellSizeInv;

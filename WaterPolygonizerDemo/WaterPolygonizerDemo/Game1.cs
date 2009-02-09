@@ -48,6 +48,8 @@ namespace WaterPolygonizerDemo
 
         SpriteFont font;
 
+        AviWriter aviWriter;
+
         public Game1()
         {
             graphics = new GraphicsDeviceManager(this);
@@ -57,9 +59,9 @@ namespace WaterPolygonizerDemo
             polygonizer = new Polygonizer(waterbody);
             InitializeFloor();
 
-            //AviWriter aviWriter = new AviWriter(this, "test.avi");
+            aviWriter = new AviWriter(this, "test.avi");
 
-            //Components.Add(aviWriter);
+            Components.Add(aviWriter);
         }
 
         /// <summary>
@@ -139,9 +141,9 @@ namespace WaterPolygonizerDemo
         private void resetCamera()
         {
             //camPosition = waterbody.PositionMax * 2;
-            camPosition = new Vector3(30, 10, 30);
+            camPosition = new Vector3(120, 40, 120);
             //camTarget = waterbody.PositionMin + ((waterbody.PositionMax - waterbody.PositionMin) / 2);
-            camTarget = new Vector3(0, -10, 0);
+            camTarget = new Vector3(0, -40, 0);
             view = Matrix.CreateLookAt(camPosition, camTarget, Vector3.Up);
             if (effect != null)
             {
@@ -178,10 +180,10 @@ namespace WaterPolygonizerDemo
             effect.Parameters["cameraPos"].SetValue(camPosition);
 
             effect.Parameters["ambientColor"].SetValue(new Vector4(.2f, .2f, .2f, 1f));
-            effect.Parameters["materialColor"].SetValue(new Vector4(.0f, .5f, .8f, .4f));
+            effect.Parameters["materialColor"].SetValue(new Vector4(.8f, .8f, .9f, .2f));
             effect.Parameters["diffusePower"].SetValue(1f);
-            effect.Parameters["specularPower"].SetValue(1);
-            effect.Parameters["exponent"].SetValue(4);
+            effect.Parameters["specularPower"].SetValue(.45f);
+            effect.Parameters["exponent"].SetValue(8);
         }
 
         /// <summary>
@@ -262,8 +264,16 @@ namespace WaterPolygonizerDemo
 
             if (hasdrawn && !paused)
             {
-                waterbody.Update();                
-                polygonizer.Update();
+                try
+                {
+                    waterbody.Update();
+                    polygonizer.Update();
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                    aviWriter.Close();
+                }
                 hasdrawn = false;
                 Count++;
             }
@@ -284,7 +294,7 @@ namespace WaterPolygonizerDemo
 
             if (Time > 1f)
             {
-                Console.WriteLine(Count);
+                //Console.WriteLine(Count);
                 Count = 0;
                 Time -= 1f;
             }
@@ -303,11 +313,27 @@ namespace WaterPolygonizerDemo
             graphics.GraphicsDevice.Clear(Color.CornflowerBlue);
 
             // TODO: Add your drawing code here
-            graphics.GraphicsDevice.VertexDeclaration = vpcDeclaration;
-            graphics.GraphicsDevice.Vertices[0].SetSource(waterVertexBuffer, 0, VertexPositionColor.SizeInBytes);
+
+            // draw floor
+
+            graphics.GraphicsDevice.VertexDeclaration = vpntDeclaration;
+
+            effect.Parameters["materialColor"].SetValue(Color.SkyBlue.ToVector4());
+            effect.Begin();
+            foreach (EffectPass pass in effect.CurrentTechnique.Passes)
+            {
+                pass.Begin();
+                GraphicsDevice.DrawUserPrimitives<VertexPositionNormalTexture>(PrimitiveType.TriangleList, floorVertices, 0, 2);
+                pass.End();
+            }
+            effect.End();
+
 
             if (polygonizer.Paused)
             {
+                // draw vertices
+                graphics.GraphicsDevice.VertexDeclaration = vpcDeclaration;
+                graphics.GraphicsDevice.Vertices[0].SetSource(waterVertexBuffer, 0, VertexPositionColor.SizeInBytes);
                 effect.Begin();
                 foreach (EffectPass pass in effect.CurrentTechnique.Passes)
                 {
@@ -317,21 +343,7 @@ namespace WaterPolygonizerDemo
                 }
                 effect.End();
             }
-
-            // draw floor
-
-            graphics.GraphicsDevice.VertexDeclaration = vpntDeclaration;
-
-            effect.Parameters["materialColor"].SetValue(Color.Aqua.ToVector4());
-            effect.Begin();
-            foreach (EffectPass pass in effect.CurrentTechnique.Passes)
-            {
-                pass.Begin();
-                GraphicsDevice.DrawUserPrimitives<VertexPositionNormalTexture>(PrimitiveType.TriangleList, floorVertices, 0, 2);
-                pass.End();
-            }
-            effect.End();
-            effect.Parameters["materialColor"].SetValue(new Vector4(.0f, .5f, .8f, .4f));
+            effect.Parameters["materialColor"].SetValue(new Vector4(.5f, .6f, .9f, .2f));
 
             if (polygonizer.Vertices.Length > 0 && !polygonizer.Paused)
             {

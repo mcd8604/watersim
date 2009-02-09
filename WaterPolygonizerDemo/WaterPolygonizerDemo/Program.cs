@@ -9,7 +9,7 @@ namespace WaterPolygonizerDemo
         /// </summary>
         static void Main(string[] args)
         {
-            using (Game2 game = new Game2())
+            using (Game1 game = new Game1())
             {
                 game.Run();
             }

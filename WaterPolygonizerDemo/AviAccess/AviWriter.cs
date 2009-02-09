@@ -68,6 +68,11 @@ namespace AviAccess
             base.Dispose(disposing);
         }
 
+        public void Close()
+        {
+            aviManager.Close();
+        }
+
         public override void Draw(GameTime gameTime)
         {
             GraphicsDevice.ResolveBackBuffer(resolveTexture);
