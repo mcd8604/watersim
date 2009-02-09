@@ -4,11 +4,10 @@ using System.Text;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System.Diagnostics;
-using RayTracer;
 
 namespace WaterPolygonizerDemo
 {
-    class Polygonizer : RayTraceable
+    class Polygonizer
     {
         //public const float RANGE = 30;
         //private const float gridSize = RANGE / 32;
@@ -547,14 +546,14 @@ namespace WaterPolygonizerDemo
                         if (edgeTable[cubeindex] != 0)
                         {
                             // Find the vertices where the surface intersects the cube
-                            Vector3 vertex1 = gridPoints[x, y, z];
-                            Vector3 vertex2 = gridPoints[x + 1, y, z];
-                            Vector3 vertex3 = gridPoints[x + 1, y, z + 1];
-                            Vector3 vertex4 = gridPoints[x, y, z + 1];
-                            Vector3 vertex5 = gridPoints[x, y + 1, z];
-                            Vector3 vertex6 = gridPoints[x + 1, y + 1, z];
-                            Vector3 vertex7 = gridPoints[x + 1, y + 1, z + 1];
-                            Vector3 vertex8 = gridPoints[x, y + 1, z + 1];
+                            //Vector3 vertex1 = gridPoints[x, y, z];
+                            //Vector3 vertex2 = gridPoints[x + 1, y, z];
+                            //Vector3 vertex3 = gridPoints[x + 1, y, z + 1];
+                            //Vector3 vertex4 = gridPoints[x, y, z + 1];
+                            //Vector3 vertex5 = gridPoints[x, y + 1, z];
+                            //Vector3 vertex6 = gridPoints[x + 1, y + 1, z];
+                            //Vector3 vertex7 = gridPoints[x + 1, y + 1, z + 1];
+                            //Vector3 vertex8 = gridPoints[x, y + 1, z + 1];
 
                             //Vector3 vertex1 = waterBody.GridPositionMin + Vector3.Multiply(new Vector3(x, y, z), waterBody.CellSize);
                             //Vector3 vertex2 = waterBody.GridPositionMin + Vector3.Multiply(new Vector3(x + 1, y, z), waterBody.CellSize);
@@ -567,75 +566,65 @@ namespace WaterPolygonizerDemo
 
                             if ((edgeTable[cubeindex] & 1) == 1)
                             {
-                                intersections[0] = VertexInterp(isolevel, vertex1, vertex2, value1, value2);
+                                intersections[0] = VertexInterp(isolevel, gridPoints[x, y, z], gridPoints[x + 1, y, z], value1, value2);
                             }
                             if ((edgeTable[cubeindex] & 2) == 2)
                             {
-                                intersections[1] = VertexInterp(isolevel, vertex2, vertex3, value2, value3);
+                                intersections[1] = VertexInterp(isolevel, gridPoints[x + 1, y, z], gridPoints[x + 1, y, z + 1], value2, value3);
                             }
                             if ((edgeTable[cubeindex] & 4) == 4)
                             {
-                                intersections[2] = VertexInterp(isolevel, vertex3, vertex4, value3, value4);
+                                intersections[2] = VertexInterp(isolevel, gridPoints[x + 1, y, z + 1], gridPoints[x, y, z + 1], value3, value4);
                             }
                             if ((edgeTable[cubeindex] & 8) == 8)
                             {
-                                intersections[3] = VertexInterp(isolevel, vertex4, vertex1, value4, value1);
+                                intersections[3] = VertexInterp(isolevel, gridPoints[x, y, z + 1], gridPoints[x, y, z], value4, value1);
                             }
                             if ((edgeTable[cubeindex] & 16) == 16)
                             {
-                                intersections[4] = VertexInterp(isolevel, vertex5, vertex6, value5, value6);
+                                intersections[4] = VertexInterp(isolevel, gridPoints[x, y + 1, z], gridPoints[x + 1, y + 1, z], value5, value6);
                             }
                             if ((edgeTable[cubeindex] & 32) == 32)
                             {
-                                intersections[5] = VertexInterp(isolevel, vertex6, vertex7, value6, value7);
+                                intersections[5] = VertexInterp(isolevel, gridPoints[x + 1, y + 1, z], gridPoints[x + 1, y + 1, z + 1], value6, value7);
                             }
                             if ((edgeTable[cubeindex] & 64) == 64)
                             {
-                                intersections[6] = VertexInterp(isolevel, vertex7, vertex8, value7, value8);
+                                intersections[6] = VertexInterp(isolevel, gridPoints[x + 1, y + 1, z + 1], gridPoints[x, y + 1, z + 1], value7, value8);
                             }
                             if ((edgeTable[cubeindex] & 128) == 128)
                             {
-                                intersections[7] = VertexInterp(isolevel, vertex8, vertex5, value8, value5);
+                                intersections[7] = VertexInterp(isolevel, gridPoints[x, y + 1, z + 1], gridPoints[x, y + 1, z], value8, value5);
                             }
                             if ((edgeTable[cubeindex] & 256) == 256)
                             {
-                                intersections[8] = VertexInterp(isolevel, vertex1, vertex5, value1, value5);
+                                intersections[8] = VertexInterp(isolevel, gridPoints[x, y, z], gridPoints[x, y + 1, z], value1, value5);
                             }
                             if ((edgeTable[cubeindex] & 512) == 512)
                             {
-                                intersections[9] = VertexInterp(isolevel, vertex2, vertex6, value2, value6);
+                                intersections[9] = VertexInterp(isolevel, gridPoints[x + 1, y, z], gridPoints[x + 1, y + 1, z], value2, value6);
                             }
                             if ((edgeTable[cubeindex] & 1024) == 1024)
                             {
-                                intersections[10] = VertexInterp(isolevel, vertex3, vertex7, value3, value7);
+                                intersections[10] = VertexInterp(isolevel, gridPoints[x + 1, y, z + 1], gridPoints[x + 1, y + 1, z + 1], value3, value7);
                             }
                             if ((edgeTable[cubeindex] & 2048) == 2048)
                             {
-                                intersections[11] = VertexInterp(isolevel, vertex4, vertex8, value4, value8);
+                                intersections[11] = VertexInterp(isolevel, gridPoints[x, y, z + 1], gridPoints[x, y + 1, z + 1], value4, value8);
                             }
 
                             // Create the triangles
                             for (int i = 0; triTable[cubeindex, i] != -1; i += 3)
                             {
-                                //Tri t = new Tri();
-                                //t.pt1 = intersections[triTable[cubeindex, i]];
-                                //t.pt2 = intersections[triTable[cubeindex, i + 1]];
-                                //t.pt3 = intersections[triTable[cubeindex, i + 2]];
-                                //t.normal = new Plane(t.pt3, t.pt2, t.pt1).Normal;
-                                //t.normal.Normalize();
-                                //gridTris[x, y, z].Add(t); 
-                                
-                                Vector3 v1 = intersections[triTable[cubeindex, i]];
-                                Vector3 v2 = intersections[triTable[cubeindex, i + 1]];
-                                Vector3 v3 = intersections[triTable[cubeindex, i + 2]];
-                                Plane p = new Plane(v1, v2, v3);
-                                Vector3 normal = p.Normal;
+                                Vector3 normal = Vector3.Cross(
+                                    intersections[triTable[cubeindex, i + 1]] - intersections[triTable[cubeindex, i]], 
+                                    intersections[triTable[cubeindex, i + 2]] - intersections[triTable[cubeindex, i]]
+                                    );
                                 normal.Normalize();
-                                gridTris[x, y, z].Add(p);
 
-                                vertexList.Add(new VertexPositionNormalTexture(v1, normal, Vector2.Zero));
-                                vertexList.Add(new VertexPositionNormalTexture(v2, normal, Vector2.Zero));
-                                vertexList.Add(new VertexPositionNormalTexture(v3, normal, Vector2.Zero));
+                                vertexList.Add(new VertexPositionNormalTexture(intersections[triTable[cubeindex, i]], normal, Vector2.Zero));
+                                vertexList.Add(new VertexPositionNormalTexture(intersections[triTable[cubeindex, i + 1]], normal, Vector2.Zero));
+                                vertexList.Add(new VertexPositionNormalTexture(intersections[triTable[cubeindex, i + 2]], normal, Vector2.Zero));
                                 
                             }
                         }
@@ -720,69 +709,6 @@ namespace WaterPolygonizerDemo
                 sw.Reset();
 #endif
             }
-        }
-
-
-        public override Vector3 Center
-        {
-            get
-            {
-                throw new NotImplementedException();
-            }
-            set
-            {
-                throw new NotImplementedException();
-            }
-        }
-
-        public override float? Intersects(Ray ray)
-        {
-            float? macroDist = ray.Intersects(boundingBox);
-
-            if (macroDist != null)
-            {
-                // travel along the ray until we find a cell with a value
-
-                float delta = gridCellSize.X;
-                float curDist = (float)macroDist;
-                Vector3 microIntersection;
-                int xIndex;
-                int yIndex;
-                int zIndex;
-                ContainmentType containType;
-
-                do
-                {
-                    microIntersection = ray.Position + (ray.Direction * curDist);
-                    xIndex = (int)Math.Min(Math.Max(0, ((microIntersection.X - waterBody.PositionMin.X) / gridCellSize.X)), gridValues.GetLength(0) - 1);
-                    yIndex = (int)Math.Min(Math.Max(0, ((microIntersection.Y - waterBody.PositionMin.Y) / gridCellSize.Y)), gridValues.GetLength(1) - 1);
-                    zIndex = (int)Math.Min(Math.Max(0, ((microIntersection.Z - waterBody.PositionMin.Z) / gridCellSize.Z)), gridValues.GetLength(2) - 1);
-
-                    if (gridTris[xIndex, yIndex, zIndex].Count > 0)
-                    {
-                        foreach (Plane p in gridTris[xIndex, yIndex, zIndex])
-                        {
-                            float? pDist = ray.Intersects(p);
-                            if (pDist != null)
-                            {
-                                lastIntersectedPlane = p;
-                                return pDist;
-                            }
-                        }
-                    }
-
-                    curDist += delta;
-                    containType = boundingBox.Contains(microIntersection);
-                } while (containType == ContainmentType.Contains || containType == ContainmentType.Intersects);
-            }
-            return null;
-        }
-
-        Plane lastIntersectedPlane;
-
-        public override Vector3 GetIntersectNormal(Vector3 intersectPoint)
-        {
-            return lastIntersectedPlane.Normal;
         }
     }
 }
