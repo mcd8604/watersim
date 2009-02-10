@@ -68,9 +68,9 @@ namespace WaterPolygonizerDemo
             polygonizer = new Polygonizer(waterbody);
             InitializeFloor();
 
-            //aviWriter = new AviWriter(this, "test.avi");
+            aviWriter = new AviWriter(this, "test.avi");
 
-            //Components.Add(aviWriter);
+            Components.Add(aviWriter);
         }
 
         /// <summary>

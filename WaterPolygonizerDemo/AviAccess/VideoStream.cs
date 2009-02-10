@@ -391,11 +391,15 @@ namespace AviFile
             for (int y = 0; y < this.height; ++y, yIndex0 += stride, yIndex1 -= stride)
                 Array.Copy(bmpData, yIndex1, flippedBytes, yIndex0, stride);
 
+            GCHandle dataHandle = GCHandle.Alloc(flippedBytes, GCHandleType.Pinned);
+
             int result = Avi.AVIStreamWrite(writeCompressed ? compressedStream : StreamPointer,
                 countFrames, 1,
-                GCHandle.Alloc(flippedBytes, GCHandleType.Pinned).AddrOfPinnedObject(),
+                dataHandle.AddrOfPinnedObject(),
                 (Int32)(flippedBytes.Length),
                 0, 0, 0);
+
+            dataHandle.Free();           
 
             if (result != 0)
             {
