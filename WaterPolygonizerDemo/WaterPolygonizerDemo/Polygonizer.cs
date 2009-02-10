@@ -30,7 +30,7 @@ namespace WaterPolygonizerDemo
         private BoundingBox boundingBox;
 
 		// We know this is going to be a long list, give it a large-ish initial capacity to reduce re-allocs
-		public readonly List<VertexPositionNormalTexture> vertexList = new List<VertexPositionNormalTexture>(1 << 16);
+		public readonly List<VertexPositionNormal> vertexList = new List<VertexPositionNormal>(1 << 16);
 
 		private readonly Vector3[] intersections = new Vector3[12];
 
@@ -578,9 +578,9 @@ namespace WaterPolygonizerDemo
                                     );
                                 normal.Normalize();
 
-                                vertexList.Add(new VertexPositionNormalTexture(intersections[triTable[cubeindex, i]], normal, Vector2.Zero));
-                                vertexList.Add(new VertexPositionNormalTexture(intersections[triTable[cubeindex, i + 1]], normal, Vector2.Zero));
-                                vertexList.Add(new VertexPositionNormalTexture(intersections[triTable[cubeindex, i + 2]], normal, Vector2.Zero));
+                                vertexList.Add(new VertexPositionNormal(intersections[triTable[cubeindex, i]], normal));
+                                vertexList.Add(new VertexPositionNormal(intersections[triTable[cubeindex, i + 1]], normal));
+                                vertexList.Add(new VertexPositionNormal(intersections[triTable[cubeindex, i + 2]], normal));
                                 
                             }
                         }

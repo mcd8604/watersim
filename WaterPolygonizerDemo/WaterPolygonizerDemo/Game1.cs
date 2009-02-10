@@ -29,11 +29,11 @@ namespace WaterPolygonizerDemo
         WaterBody waterbody;
         VertexPositionColor[] waterPoints;
         VertexDeclaration vpcDeclaration;
-        VertexDeclaration vpntDeclaration;
+        VertexDeclaration vpnDeclaration;
         VertexBuffer waterVertexBuffer;
         Polygonizer polygonizer;
 
-        VertexPositionNormalTexture[] floorVertices;
+        VertexPositionNormal[] floorVertices;
 
         Vector3 gravity = new Vector3(0f, -1f, 0f);
 
@@ -87,15 +87,15 @@ namespace WaterPolygonizerDemo
 
         private void InitializeFloor()
         {
-            floorVertices = new VertexPositionNormalTexture[6];
+            floorVertices = new VertexPositionNormal[6];
 
-            floorVertices[0] = new VertexPositionNormalTexture(new Vector3(waterbody.PositionMax.X, waterbody.PositionMin.Y, waterbody.PositionMax.Z), Vector3.Up, Vector2.Zero);
-            floorVertices[1] = new VertexPositionNormalTexture(new Vector3(waterbody.PositionMin.X, waterbody.PositionMin.Y, waterbody.PositionMax.Z), Vector3.Up, Vector2.Zero);
-            floorVertices[2] = new VertexPositionNormalTexture(new Vector3(waterbody.PositionMin.X, waterbody.PositionMin.Y, waterbody.PositionMin.Z), Vector3.Up, Vector2.Zero);
+            floorVertices[0] = new VertexPositionNormal(new Vector3(waterbody.PositionMax.X, waterbody.PositionMin.Y, waterbody.PositionMax.Z), Vector3.Up);
+            floorVertices[1] = new VertexPositionNormal(new Vector3(waterbody.PositionMin.X, waterbody.PositionMin.Y, waterbody.PositionMax.Z), Vector3.Up);
+            floorVertices[2] = new VertexPositionNormal(new Vector3(waterbody.PositionMin.X, waterbody.PositionMin.Y, waterbody.PositionMin.Z), Vector3.Up);
 
-            floorVertices[3] = new VertexPositionNormalTexture(new Vector3(waterbody.PositionMax.X, waterbody.PositionMin.Y, waterbody.PositionMax.Z), Vector3.Up, Vector2.Zero);
-            floorVertices[4] = new VertexPositionNormalTexture(new Vector3(waterbody.PositionMin.X, waterbody.PositionMin.Y, waterbody.PositionMin.Z), Vector3.Up, Vector2.Zero);
-            floorVertices[5] = new VertexPositionNormalTexture(new Vector3(waterbody.PositionMax.X, waterbody.PositionMin.Y, waterbody.PositionMin.Z), Vector3.Up, Vector2.Zero);
+            floorVertices[3] = new VertexPositionNormal(new Vector3(waterbody.PositionMax.X, waterbody.PositionMin.Y, waterbody.PositionMax.Z), Vector3.Up);
+            floorVertices[4] = new VertexPositionNormal(new Vector3(waterbody.PositionMin.X, waterbody.PositionMin.Y, waterbody.PositionMin.Z), Vector3.Up);
+            floorVertices[5] = new VertexPositionNormal(new Vector3(waterbody.PositionMax.X, waterbody.PositionMin.Y, waterbody.PositionMin.Z), Vector3.Up);
         }
 
         /// <summary>
@@ -133,7 +133,7 @@ namespace WaterPolygonizerDemo
             // TODO: use this.Content to load your game content here
             GraphicsDevice.RenderState.PointSize = 5f;
             vpcDeclaration = new VertexDeclaration(GraphicsDevice, VertexPositionColor.VertexElements);
-            vpntDeclaration = new VertexDeclaration(GraphicsDevice, VertexPositionNormalTexture.VertexElements);
+            vpnDeclaration = new VertexDeclaration(GraphicsDevice, VertexPositionNormal.VertexElements);
 
             InitializeMatrices();
             InitializeEffect();
@@ -325,14 +325,14 @@ namespace WaterPolygonizerDemo
 
             // draw floor
 
-            graphics.GraphicsDevice.VertexDeclaration = vpntDeclaration;
+            graphics.GraphicsDevice.VertexDeclaration = vpnDeclaration;
 
             effect.Parameters["materialColor"].SetValue(Color.SkyBlue.ToVector4());
             effect.Begin();
             foreach (EffectPass pass in effect.CurrentTechnique.Passes)
             {
                 pass.Begin();
-                GraphicsDevice.DrawUserPrimitives<VertexPositionNormalTexture>(PrimitiveType.TriangleList, floorVertices, 0, 2);
+                GraphicsDevice.DrawUserPrimitives<VertexPositionNormal>(PrimitiveType.TriangleList, floorVertices, 0, 2);
                 pass.End();
             }
             effect.End();
@@ -356,12 +356,12 @@ namespace WaterPolygonizerDemo
 
 			if (polygonizer.vertexList.Count > 0 && !polygonizer.Paused)
             {
-                graphics.GraphicsDevice.VertexDeclaration = vpntDeclaration;
+                graphics.GraphicsDevice.VertexDeclaration = vpnDeclaration;
                 effect.Begin();
                 foreach (EffectPass pass in effect.CurrentTechnique.Passes)
                 {
                     pass.Begin();
-					GraphicsDevice.DrawUserPrimitives<VertexPositionNormalTexture>(PrimitiveType.TriangleList, polygonizer.vertexList.ToArray(), 0, polygonizer.vertexList.Count / 3);
+					GraphicsDevice.DrawUserPrimitives<VertexPositionNormal>(PrimitiveType.TriangleList, polygonizer.vertexList.ToArray(), 0, polygonizer.vertexList.Count / 3);
                     pass.End();
                 }
                 effect.End();
