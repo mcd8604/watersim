@@ -1,5 +1,10 @@
+#define DYNAMIC_GRID
+
 using System;
 using System.Collections.Generic;
+#if DEBUG
+using System.Diagnostics;
+#endif
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
@@ -56,6 +61,7 @@ namespace WaterPolygonizerDemo
 #if DEBUG
 		public Stopwatch timer;
 #endif
+
 		public WaterBody()
 		{
 			CalcKernels();
@@ -101,7 +107,7 @@ namespace WaterPolygonizerDemo
 
 			water = list.ToArray();
 		}
-
+#if !DYNAMIC_GRID
 		private void SetupGrid()
 		{
 			const float cellsize = SmoothRadius * 2;
@@ -109,9 +115,9 @@ namespace WaterPolygonizerDemo
 			const double size = cellsize / SimScale;
 
 			GridMin = Min;
-			GridMin.X -= 1f; GridMin.Y -= 1f; GridMin.Z -= 1f;
+			GridMin.X -= 0.1f; GridMin.Y -= 0.1f; GridMin.Z -= 0.1f;
 			GridMax = Max;
-			GridMax.X += 1f; GridMax.Y += 1f; GridMax.Z += 1f;
+			GridMax.X += 0.1f; GridMax.Y += 0.1f; GridMax.Z += 0.1f;
 
 			GridSize = GridMax - GridMin;
 
@@ -157,6 +163,89 @@ namespace WaterPolygonizerDemo
                 }
 			}
 		}
+#else
+		private void SetupGrid()
+		{
+			const float cellsize = SmoothRadius * 2;
+			const double res = SimScale / cellsize;
+			const double size = cellsize / SimScale;
+
+			GridMin = Min;
+			GridMin.X -= 0.1f; GridMin.Y -= 0.1f; GridMin.Z -= 0.1f;
+			GridMax = Max;
+			GridMax.X += 0.1f; GridMax.Y += 0.1f; GridMax.Z += 0.1f;
+
+			GridSize = GridMax - GridMin;
+
+			GridResolution.X = (int)Math.Ceiling(GridSize.X * res);
+			GridResolution.Y = (int)Math.Ceiling(GridSize.Y * res);
+			GridResolution.Z = (int)Math.Ceiling(GridSize.Z * res);
+
+			GridSize.X = (int)Math.Ceiling(GridResolution.X * size);
+			GridSize.Y = (int)Math.Ceiling(GridResolution.Y * size);
+			GridSize.Z = (int)Math.Ceiling(GridResolution.Z * size);
+
+			watergrid = new List<Water>[(int)GridSize.X, (int)GridSize.Y, (int)GridSize.Z];
+			for (int x = 0; x < (int)GridSize.X; ++x)
+			{
+				for (int y = 0; y < (int)GridSize.Y; ++y)
+				{
+					for (int z = 0; z < (int)GridSize.Z; ++z)
+					{
+						watergrid[x, y, z] = new List<Water>();
+					}
+				}
+			}
+		}
+
+		private void GridParticles()
+		{
+			const float cellsize = SmoothRadius * 2;
+			const double res = SimScale / cellsize;
+			const double size = cellsize / SimScale;
+
+			Vector3 waterMin = Max;
+			Vector3 waterMax = Min;
+
+			foreach (Water item in water)
+			{
+				waterMin = Vector3.Min(waterMin, item.Position);
+				waterMax = Vector3.Max(waterMax, item.Position);
+			}
+
+			GridMin = waterMin;
+			GridMin.X -= 0.1f; GridMin.Y -= 0.1f; GridMin.Z -= 0.1f;
+			GridMax = waterMax;
+			GridMax.X += 0.1f; GridMax.Y += 0.1f; GridMax.Z += 0.1f;
+
+			GridSize = GridMax - GridMin;
+
+			GridResolution.X = (int)Math.Ceiling(GridSize.X * res);
+			GridResolution.Y = (int)Math.Ceiling(GridSize.Y * res);
+			GridResolution.Z = (int)Math.Ceiling(GridSize.Z * res);
+
+			GridSize.X = (int)Math.Ceiling(GridResolution.X * size);
+			GridSize.Y = (int)Math.Ceiling(GridResolution.Y * size);
+			GridSize.Z = (int)Math.Ceiling(GridResolution.Z * size);
+
+			foreach (List<Water> list in watergrid)
+			{
+				list.Clear();
+			}
+
+			Vector3 delta = GridResolution / GridSize;
+			foreach (Water item in water)
+			{
+				int x = (int)((item.Position.X - GridMin.X) * delta.X);
+				int y = (int)((item.Position.Y - GridMin.Y) * delta.Y);
+				int z = (int)((item.Position.Z - GridMin.Z) * delta.Z);
+				if (x >= 0 && y >= 0 && z >= 0 && x < GridSize.X && y < GridSize.Y && z < GridSize.Z)
+				{
+					watergrid[x, y, z].Add(item);
+				}
+			}
+		}
+#endif
 
 		public void Update()
 		{
@@ -207,11 +296,15 @@ namespace WaterPolygonizerDemo
 
 		private void findNeighborsGrid()
 		{
-			for (int x = 0; x < (int)GridSize.X; ++x)
+			int xmax = (int)GridSize.X;
+			int ymax = (int)GridSize.Y;
+			int zmax = (int)GridSize.Z;
+
+			for (int x = 0; x < xmax; ++x)
 			{
-				for (int y = 0; y < (int)GridSize.Y; ++y)
+				for (int y = 0; y < ymax; ++y)
 				{
-					for (int z = 0; z < (int)GridSize.Z; ++z)
+					for (int z = 0; z < zmax; ++z)
 					{
 						foreach (Water a in watergrid[x,y,z])
 						{
