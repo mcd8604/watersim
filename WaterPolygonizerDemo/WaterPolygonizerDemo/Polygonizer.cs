@@ -2,6 +2,9 @@
 
 using System;
 using System.Collections.Generic;
+#if DEBUG
+using System.Diagnostics;
+#endif
 using Microsoft.Xna.Framework;
 
 namespace WaterPolygonizerDemo
@@ -687,6 +690,10 @@ namespace WaterPolygonizerDemo
                 polyTime = sw.Elapsed.TotalSeconds;
                 sw.Reset();
 #endif
+            } else
+            {
+            	gridTime = 0;
+            	polyTime = 0;
             }
         }
     }
