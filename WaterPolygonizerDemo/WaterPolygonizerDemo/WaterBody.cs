@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
@@ -8,53 +7,34 @@ namespace WaterPolygonizerDemo
 {
 	class WaterBody
 	{
-		readonly Random Rand = new Random();
+		private readonly Random Rand = new Random();
 
-		float DT = 0.004f;
-		readonly Vector3 Gravity = new Vector3(0, -9.8f, 0);
+		private const float DT = 0.004f;
+		private readonly Vector3 Gravity = new Vector3(0, -9.8f, 0);
 
-		float SimScale = 0.004f;
+		internal const float SimScale = 0.004f;
 
-        public float Scale
-        {
-            get { return SimScale; }
-        }
+		private const float Viscosity = 0.2f;
+		private const float RestDensity = 600f;
+		private const float ParticleMass = 0.00020543f;
+		private const float ParticleRadius = 0.004f;
+		private float ParticleDistance = 0.0059f;
+		internal const float SmoothRadius = 0.01f;
+		private const float InteriorStiffness = 1f;
+		private const float ExteriorStiffness = 10000f;
+		private const float ExteriorDampening = 256f;
+		private const float SpeedLimit = 200f;
 
-		float Viscosity = 0.2f;
-		float RestDensity = 600f;
-		float ParticleMass = 0.00020543f;
-		float ParticleRadius = 0.004f;
-		float ParticleDistance = 0.0059f;
-		float SmoothRadius = 0.01f;
-		float InteriorStiffness = 1f;
-		float ExteriorStiffness = 10000f;
-		float ExteriorDampening = 256f;
-		float SpeedLimit = 200f;
+		private float R2;
+		private float Poly6Kern;
+		private float SpikyKern;
+		private float LapKern;
 
-        public float Radius
-        {
-            get { return SmoothRadius; }
-        }
+		internal readonly Vector3 Min = new Vector3(-60f, -60f, -60f);
+		internal readonly Vector3 Max = new Vector3(60f, 60f, 60f);
 
-		float R2;
-		float Poly6Kern;
-		float SpikyKern;
-		float LapKern;
-
-        Vector3 Min = new Vector3(-60f, -60f, -60f);
-        Vector3 Max = new Vector3(60f, 60f, 60f);
-
-        public Vector3 PositionMin
-        {
-            get { return Min; }
-        }
-        public Vector3 PositionMax
-        {
-            get { return Max; }
-        }
-
-		Vector3 InitMin = new Vector3(0f, -40f, 0f);
-        Vector3 InitMax = new Vector3(20f, 48f, 20f);
+		internal readonly Vector3 InitMin = new Vector3(0f, -40f, 0f);
+		internal readonly Vector3 InitMax = new Vector3(20f, 48f, 20f);
 
 		//Vector3 Min = new Vector3(-25f, 0f, -25f);
 		//Vector3 Max = new Vector3(25f, 100f, 25f);
@@ -67,10 +47,10 @@ namespace WaterPolygonizerDemo
 
 		internal List<Water>[, ,] watergrid;
 
-		Vector3 GridMin;
-		Vector3 GridMax;
-		Vector3 GridSize;
-        Vector3 GridResolution = Vector3.Zero;
+		private Vector3 GridMin;
+		private Vector3 GridMax;
+		private Vector3 GridSize;
+		private Vector3 GridResolution = Vector3.Zero;
 
 		public bool UseGrid = true;
 #if DEBUG
@@ -124,9 +104,9 @@ namespace WaterPolygonizerDemo
 
 		private void SetupGrid()
 		{
-			float cellsize = SmoothRadius * 2;
-			double res = SimScale / cellsize;
-			double size = cellsize / SimScale;
+			const float cellsize = SmoothRadius * 2;
+			const double res = SimScale / cellsize;
+			const double size = cellsize / SimScale;
 
 			GridMin = Min;
 			GridMin.X -= 1f; GridMin.Y -= 1f; GridMin.Z -= 1f;
@@ -636,8 +616,8 @@ namespace WaterPolygonizerDemo
 		private void doStuff()
 		{
 
-			float LimitSq = SpeedLimit * SpeedLimit;
-			float Epsilon = 0.00001f;
+			const float LimitSq = SpeedLimit * SpeedLimit;
+			const float Epsilon = 0.00001f;
 
 			foreach (Water a in water)
 			{
@@ -649,8 +629,6 @@ namespace WaterPolygonizerDemo
 				{
 					acceleration *= (SpeedLimit / (float)Math.Sqrt(speed));
 				}
-
-
 
 				float diff = 2 * ParticleRadius - (a.Position.X - Min.X) * SimScale;
 				if (diff > Epsilon)
@@ -666,7 +644,6 @@ namespace WaterPolygonizerDemo
 					acceleration.X -= adjustment;
 				}
 
-
 				diff = 2 * ParticleRadius - (a.Position.Y - Min.Y) * SimScale;
 				if (diff > Epsilon)
 				{
@@ -680,7 +657,6 @@ namespace WaterPolygonizerDemo
 					float adjustment = ExteriorStiffness * diff - ExteriorDampening * Vector3.Dot(a.VelocityEval, Vector3.Down);
 					acceleration.Y -= adjustment;
 				}
-
 
 				diff = 2 * ParticleRadius - (a.Position.Z - Min.Z) * SimScale;
 				if (diff > Epsilon)
@@ -696,16 +672,13 @@ namespace WaterPolygonizerDemo
 					acceleration.Z -= adjustment;
 				}
 
-
 				Vector3 nextVelocity = a.Velocity + ((acceleration + Gravity) * DT);
 
 				a.VelocityEval = (a.Velocity + nextVelocity) * 0.5f;
 				a.Velocity = nextVelocity;
 
 				a.Position += nextVelocity * (DT / SimScale);
-
 			}
-
 		}
 	}
 }

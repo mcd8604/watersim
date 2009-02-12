@@ -1,9 +1,8 @@
-﻿using System;
+﻿#define USE_ARRAY
+
+using System;
 using System.Collections.Generic;
-using System.Text;
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
-using System.Diagnostics;
 
 namespace WaterPolygonizerDemo
 {
@@ -11,7 +10,7 @@ namespace WaterPolygonizerDemo
     {
         //public const float RANGE = 30;
         //private const float gridSize = RANGE / 32;
-        private const int GRID_DIMENSION = 128;
+        private const int GRID_DIMENSION = 64;
         //private float cutOff = 2f;
         private Vector3 gridCellSize;
         private Vector3 gridCellSizeInv;
@@ -25,21 +24,23 @@ namespace WaterPolygonizerDemo
         private Vector3[, ,] gridPoints;
         private float[, ,] gridValues;
 
-        private WaterBody waterBody;
+        private readonly WaterBody waterBody;
 
         private BoundingBox boundingBox;
 
+#if !USE_ARRAY
 		// We know this is going to be a long list, give it a large-ish initial capacity to reduce re-allocs
 		public readonly List<VertexPositionNormal> vertexList = new List<VertexPositionNormal>(1 << 16);
+#else
+		public readonly VertexPositionNormal[] VertexList = new VertexPositionNormal[2<<20];
+
+    	public int currentframeposition;
+    	public int currentframeprimatives;
+#endif
 
 		private readonly Vector3[] intersections = new Vector3[12];
 
-        private bool paused = false;
-        public bool Paused
-        {
-            get { return paused; }
-            set { paused = value; }
-        }
+        internal bool Paused;
 
         public Polygonizer(WaterBody waterBody)
         {
@@ -49,14 +50,17 @@ namespace WaterPolygonizerDemo
 
         private void initGrid()
         {
-            isoLevel = waterBody.Radius / waterBody.Scale;
+            isoLevel = WaterBody.SmoothRadius / WaterBody.SimScale;
 
-            gridCellSize = (waterBody.PositionMax - waterBody.PositionMin) / GRID_DIMENSION;
+        	Vector3 PositionMin = waterBody.Min;
+        	Vector3 PositionMax = waterBody.Max;
+
+            gridCellSize = (PositionMax - PositionMin) / GRID_DIMENSION;
             gridCellSizeInv = new Vector3(1 / gridCellSize.X, 1 / gridCellSize.Y, 1 / gridCellSize.Z);
 
-            boundingBox = new BoundingBox(waterBody.PositionMin, waterBody.PositionMax);
+        	boundingBox = new BoundingBox(PositionMin, PositionMax);
 
-            gridPoints = new Vector3[GRID_DIMENSION, GRID_DIMENSION, GRID_DIMENSION];
+        	gridPoints = new Vector3[GRID_DIMENSION, GRID_DIMENSION, GRID_DIMENSION];
             gridValues = new float[GRID_DIMENSION, GRID_DIMENSION, GRID_DIMENSION];
             waterGrid = new List<Water>[GRID_DIMENSION, GRID_DIMENSION, GRID_DIMENSION];
 
@@ -67,9 +71,9 @@ namespace WaterPolygonizerDemo
                     for (int z = 0; z < GRID_DIMENSION; ++z)
                     {
                         gridPoints[x, y, z] = new Vector3(
-                            waterBody.PositionMin.X + x * gridCellSize.X,
-                            waterBody.PositionMin.Y + y * gridCellSize.Y,
-                            waterBody.PositionMin.Z + z * gridCellSize.Z);
+                            PositionMin.X + x * gridCellSize.X,
+                            PositionMin.Y + y * gridCellSize.Y,
+                            PositionMin.Z + z * gridCellSize.Z);
 
                         waterGrid[x, y, z] = new List<Water>();
                     }
@@ -79,6 +83,9 @@ namespace WaterPolygonizerDemo
 
         private void updateGrid()
         {
+			Vector3 PositionMin = waterBody.Min;
+			Vector3 PositionMax = waterBody.Max;
+
             // Clear cells
 
             for (int x = 0; x < GRID_DIMENSION; ++x)
@@ -94,17 +101,17 @@ namespace WaterPolygonizerDemo
             
             // Put water in cells
 
-            float radius = waterBody.Radius / waterBody.Scale;
+            const float radius = WaterBody.SmoothRadius / WaterBody.SimScale;
 
             foreach (Water w in waterBody.water)
             {
-                int minX = (int)((Math.Max(waterBody.PositionMin.X, w.Position.X - radius) - waterBody.PositionMin.X) * gridCellSizeInv.X);
-                int minY = (int)((Math.Max(waterBody.PositionMin.Y, w.Position.Y - radius) - waterBody.PositionMin.Y) * gridCellSizeInv.Y);
-                int minZ = (int)((Math.Max(waterBody.PositionMin.Z, w.Position.Z - radius) - waterBody.PositionMin.Z) * gridCellSizeInv.Z);
+                int minX = (int)((Math.Max(PositionMin.X, w.Position.X - radius) - PositionMin.X) * gridCellSizeInv.X);
+                int minY = (int)((Math.Max(PositionMin.Y, w.Position.Y - radius) - PositionMin.Y) * gridCellSizeInv.Y);
+                int minZ = (int)((Math.Max(PositionMin.Z, w.Position.Z - radius) - PositionMin.Z) * gridCellSizeInv.Z);
 
-                int maxX = (int)((Math.Min(waterBody.PositionMax.X, w.Position.X + radius) - waterBody.PositionMin.X) * gridCellSizeInv.X);
-                int maxY = (int)((Math.Min(waterBody.PositionMax.Y, w.Position.Y + radius) - waterBody.PositionMin.Y) * gridCellSizeInv.Y);
-                int maxZ = (int)((Math.Min(waterBody.PositionMax.Z, w.Position.Z + radius) - waterBody.PositionMin.Z) * gridCellSizeInv.Z);
+                int maxX = (int)((Math.Min(PositionMax.X, w.Position.X + radius) - PositionMin.X) * gridCellSizeInv.X);
+                int maxY = (int)((Math.Min(PositionMax.Y, w.Position.Y + radius) - PositionMin.Y) * gridCellSizeInv.Y);
+                int maxZ = (int)((Math.Min(PositionMax.Z, w.Position.Z + radius) - PositionMin.Z) * gridCellSizeInv.Z);
 
                 for (int x = minX; x < maxX; ++x)
                 {
@@ -493,13 +500,22 @@ namespace WaterPolygonizerDemo
         /// <param name="isolevel"></param>
         void Polygonise(float isolevel)
         {
+#if !USE_ARRAY
 			vertexList.Clear();
+#else
+			currentframeposition = 0;
+    		currentframeprimatives = 0;
+#endif
 
-            for (int x = 0; x < gridValues.GetLength(0) - 1; ++x)
+        	int xmax = gridValues.GetLength(0) - 1;
+        	int ymax = gridValues.GetLength(1) - 1;
+        	int zmax = gridValues.GetLength(2) - 1;
+
+            for (int x = 0; x < xmax; ++x)
             {
-                for (int y = 0; y < gridValues.GetLength(1) - 1; ++y)
+                for (int y = 0; y < ymax; ++y)
                 {
-                    for (int z = 0; z < gridValues.GetLength(2) - 1; ++z)
+                    for (int z = 0; z < zmax; ++z)
                     {
                         // Determine the index into the edge table which
                         // tells us which vertices are inside of the surface
@@ -554,8 +570,6 @@ namespace WaterPolygonizerDemo
                             //Vector3 vertex7 = waterBody.GridPositionMin + Vector3.Multiply(new Vector3(x + 1, y + 1, z + 1), waterBody.CellSize);;
                             //Vector3 vertex8 = waterBody.GridPositionMin + Vector3.Multiply(new Vector3(x, y + 1, z + 1), waterBody.CellSize);;
 
-
-
 							intersections[0] = (edgeTable[cubeindex] & 1) != 0 ? VertexInterp(isolevel, gridPoints[x, y, z], gridPoints[x + 1, y, z], value1, value2) : Vector3.Zero;
                         	intersections[1] = (edgeTable[cubeindex] & 2) != 0 ? VertexInterp(isolevel, gridPoints[x + 1, y, z], gridPoints[x + 1, y, z + 1], value2, value3) : Vector3.Zero;
 							intersections[2] = (edgeTable[cubeindex] & 4) != 0 ? VertexInterp(isolevel, gridPoints[x + 1, y, z + 1], gridPoints[x, y, z + 1], value3, value4) : Vector3.Zero;
@@ -570,18 +584,29 @@ namespace WaterPolygonizerDemo
 							intersections[11] = (edgeTable[cubeindex] & 2048) != 0 ? VertexInterp(isolevel, gridPoints[x, y, z + 1], gridPoints[x, y + 1, z + 1], value4, value8) : Vector3.Zero;
 
                             // Create the triangles
-                            for (int i = 0; triTable[cubeindex, i] != -1; i += 3)
+                            for (int i = 0; triTable[cubeindex, i] != -1;)
                             {
-                                Vector3 normal = Vector3.Cross(
+                                Vector3 normal = Vector3.Normalize(Vector3.Cross(
                                     intersections[triTable[cubeindex, i + 2]] - intersections[triTable[cubeindex, i]], 
                                     intersections[triTable[cubeindex, i + 1]] - intersections[triTable[cubeindex, i]]
-                                    );
-                                normal.Normalize();
+                                    ));
 
+#if !USE_ARRAY
                                 vertexList.Add(new VertexPositionNormal(intersections[triTable[cubeindex, i]], normal));
                                 vertexList.Add(new VertexPositionNormal(intersections[triTable[cubeindex, i + 1]], normal));
                                 vertexList.Add(new VertexPositionNormal(intersections[triTable[cubeindex, i + 2]], normal));
-                                
+#else
+                            	VertexList[currentframeposition].Position = intersections[triTable[cubeindex, i++]];
+                            	VertexList[currentframeposition++].Normal = normal;
+                            	VertexList[currentframeposition].Position = intersections[triTable[cubeindex, i++]];
+								VertexList[currentframeposition++].Normal = normal;
+                            	VertexList[currentframeposition].Position = intersections[triTable[cubeindex, i++]];
+								VertexList[currentframeposition++].Normal = normal;
+
+                            	currentframeprimatives++;
+
+								if ( currentframeposition == 2<<20 ) { return; }
+#endif
                             }
                         }
                     }
@@ -639,7 +664,7 @@ namespace WaterPolygonizerDemo
 
         internal void Update()
         {
-            if (!paused)
+            if (!Paused)
             {
 #if DEBUG
                 sw.Start();

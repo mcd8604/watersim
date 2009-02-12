@@ -1,63 +1,56 @@
 // Change to #define to enforce minimum memory usage - kills CPU
 #undef FORCE_MINIMUM_MEMORY_USAGE
 
+// Remember to set in Polygonizer too
+#define USE_ARRAY
+
 using System;
-using System.Collections.Generic;
+using AviAccess;
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Audio;
-using Microsoft.Xna.Framework.Content;
-using Microsoft.Xna.Framework.GamerServices;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
-using Microsoft.Xna.Framework.Net;
-using Microsoft.Xna.Framework.Storage;
-using System.Diagnostics;
-using AviAccess;
 
 namespace WaterPolygonizerDemo
 {
     /// <summary>
     /// This is the main type for your game
     /// </summary>
-    public class Game1 : Microsoft.Xna.Framework.Game
+    public class Game1 : Game
     {
-        GraphicsDeviceManager graphics;
+		private readonly GraphicsDeviceManager graphics;
 #if DEBUG
-        SpriteBatch spriteBatch;
+        private SpriteBatch spriteBatch;
+        private SpriteFont font;
+		private int framecount = 0;
 #endif
 
-        WaterBody waterbody;
-        VertexPositionColor[] waterPoints;
-        VertexDeclaration vpcDeclaration;
-        VertexDeclaration vpnDeclaration;
-        VertexBuffer waterVertexBuffer;
-        Polygonizer polygonizer;
+		private WaterBody waterbody;
+		private VertexPositionColor[] waterPoints;
+		private VertexDeclaration vpcDeclaration;
+		private VertexDeclaration vpnDeclaration;
+		private VertexBuffer waterVertexBuffer;
+		private Polygonizer polygonizer;
 
-        VertexPositionNormal[] floorVertices;
+		private VertexPositionNormal[] floorVertices;
 
-        Vector3 gravity = new Vector3(0f, -1f, 0f);
-
-        bool hasdrawn = false;
-        bool paused = false;
+		private bool hasdrawn;
+		private bool paused;
 
         //BasicEffect effect;
-        Effect effect;
+		private Effect effect;
 
-        Vector3 camPosition;
-        Vector3 camTarget;
-        Quaternion camRotation = Quaternion.Identity;
+		private Vector3 camPosition;
+		private Vector3 camTarget;
 
-        Matrix world;
-        Matrix view;
-        Matrix projection;
+		private Matrix world;
+		private Matrix view;
+		private Matrix projection;
 
-        SpriteFont font;
+    	private readonly AviWriter aviWriter;
 
-        AviWriter aviWriter;
-
-#if DEBUG
-    	private int framecount = 0;
-#endif
+    	private MouseState lastState;
+		private MouseState curState;
+		private float rotation;
 
         public Game1()
         {
@@ -73,29 +66,20 @@ namespace WaterPolygonizerDemo
             Components.Add(aviWriter);
         }
 
-        /// <summary>
-        /// Allows the game to perform any initialization it needs to before starting to run.
-        /// This is where it can query for any required services and load any non-graphic
-        /// related content.  Calling base.Initialize will enumerate through any components
-        /// and initialize them as well.
-        /// </summary>
-        protected override void Initialize()
-        {
-            // TODO: Add your initialization logic here
-            base.Initialize();
-        }
-
         private void InitializeFloor()
         {
             floorVertices = new VertexPositionNormal[6];
 
-            floorVertices[0] = new VertexPositionNormal(new Vector3(waterbody.PositionMax.X, waterbody.PositionMin.Y, waterbody.PositionMax.Z), Vector3.Up);
-            floorVertices[1] = new VertexPositionNormal(new Vector3(waterbody.PositionMin.X, waterbody.PositionMin.Y, waterbody.PositionMax.Z), Vector3.Up);
-            floorVertices[2] = new VertexPositionNormal(new Vector3(waterbody.PositionMin.X, waterbody.PositionMin.Y, waterbody.PositionMin.Z), Vector3.Up);
+			Vector3 PositionMin = waterbody.Min;
+			Vector3 PositionMax = waterbody.Max;
 
-            floorVertices[3] = new VertexPositionNormal(new Vector3(waterbody.PositionMax.X, waterbody.PositionMin.Y, waterbody.PositionMax.Z), Vector3.Up);
-            floorVertices[4] = new VertexPositionNormal(new Vector3(waterbody.PositionMin.X, waterbody.PositionMin.Y, waterbody.PositionMin.Z), Vector3.Up);
-            floorVertices[5] = new VertexPositionNormal(new Vector3(waterbody.PositionMax.X, waterbody.PositionMin.Y, waterbody.PositionMin.Z), Vector3.Up);
+            floorVertices[0] = new VertexPositionNormal(new Vector3(PositionMax.X, PositionMin.Y, PositionMax.Z), Vector3.Up);
+            floorVertices[1] = new VertexPositionNormal(new Vector3(PositionMin.X, PositionMin.Y, PositionMax.Z), Vector3.Up);
+            floorVertices[2] = new VertexPositionNormal(new Vector3(PositionMin.X, PositionMin.Y, PositionMin.Z), Vector3.Up);
+
+            floorVertices[3] = new VertexPositionNormal(new Vector3(PositionMax.X, PositionMin.Y, PositionMax.Z), Vector3.Up);
+            floorVertices[4] = new VertexPositionNormal(new Vector3(PositionMin.X, PositionMin.Y, PositionMin.Z), Vector3.Up);
+            floorVertices[5] = new VertexPositionNormal(new Vector3(PositionMax.X, PositionMin.Y, PositionMin.Z), Vector3.Up);
         }
 
         /// <summary>
@@ -115,7 +99,7 @@ namespace WaterPolygonizerDemo
                 VertexPositionColor.SizeInBytes * waterPoints.Length, BufferUsage.None
             );
 
-            waterVertexBuffer.SetData<VertexPositionColor>(waterPoints);
+            waterVertexBuffer.SetData(waterPoints);
 
         }
 
@@ -128,9 +112,9 @@ namespace WaterPolygonizerDemo
 #if DEBUG
             // Create a new SpriteBatch, which can be used to draw textures.
             spriteBatch = new SpriteBatch(GraphicsDevice);
+			font = Content.Load<SpriteFont>("font");
 #endif
 
-            // TODO: use this.Content to load your game content here
             GraphicsDevice.RenderState.PointSize = 5f;
             vpcDeclaration = new VertexDeclaration(GraphicsDevice, VertexPositionColor.VertexElements);
             vpnDeclaration = new VertexDeclaration(GraphicsDevice, VertexPositionNormal.VertexElements);
@@ -138,8 +122,6 @@ namespace WaterPolygonizerDemo
             InitializeMatrices();
             InitializeEffect();
             InitializeVertices();
-
-            font = Content.Load<SpriteFont>("font");
         }
 
         private void InitializeMatrices()
@@ -198,22 +180,6 @@ namespace WaterPolygonizerDemo
         }
 
         /// <summary>
-        /// UnloadContent will be called once per game and is the place to unload
-        /// all content.
-        /// </summary>
-        protected override void UnloadContent()
-        {
-            // TODO: Unload any non ContentManager content here
-        }
-
-        private float Time;
-        private int Count;
-
-        MouseState lastState = Mouse.GetState();
-        MouseState curState;
-        float rotation;
-
-        /// <summary>
         /// Allows the game to run logic such as updating the world,
         /// checking for collisions, gathering input, and playing audio.
         /// </summary>
@@ -230,7 +196,7 @@ namespace WaterPolygonizerDemo
             {
                 // Update camera rotation
                 rotation += (curState.X - lastState.X) / (float)GraphicsDevice.Viewport.Width * MathHelper.TwoPi;
-                float y = (curState.Y - lastState.Y) / (float)GraphicsDevice.Viewport.Height * MathHelper.TwoPi;
+                //float y = (curState.Y - lastState.Y) / (float)GraphicsDevice.Viewport.Height * MathHelper.TwoPi;
                 //camRotation = Quaternion.CreateFromYawPitchRoll(x, y, 0);
                 resetCamera();
             }
@@ -241,7 +207,7 @@ namespace WaterPolygonizerDemo
 
             if (keyboard.IsKeyDown(Keys.Escape))
             {
-                this.Exit();
+                Exit();
             }
 
             if (keyboard.IsKeyDown(Keys.Space))
@@ -277,35 +243,28 @@ namespace WaterPolygonizerDemo
                 {
                     waterbody.Update();
                     polygonizer.Update();
+
+					for (int i = 0; i < waterbody.water.Length; i++)
+					{
+						waterPoints[i] = new VertexPositionColor(waterbody.water[i].Position, waterbody.water[i].color);
+					}
+
+					waterVertexBuffer = new VertexBuffer(
+						graphics.GraphicsDevice,
+						VertexPositionColor.SizeInBytes * waterPoints.Length, BufferUsage.None
+					);
+
+					waterVertexBuffer.SetData(waterPoints);
+
+					hasdrawn = false;
                 }
                 catch (Exception e)
                 {
                     Console.WriteLine(e);
                     aviWriter.Close();
+					Exit();
+					return;
                 }
-                hasdrawn = false;
-                Count++;
-            }
-
-            for (int i = 0; i < waterbody.water.Length; i++)
-            {
-                waterPoints[i] = new VertexPositionColor(waterbody.water[i].Position, waterbody.water[i].color);
-            }
-
-            waterVertexBuffer = new VertexBuffer(
-                graphics.GraphicsDevice,
-                VertexPositionColor.SizeInBytes * waterPoints.Length, BufferUsage.None
-            );
-
-            waterVertexBuffer.SetData<VertexPositionColor>(waterPoints);
-
-            Time += (float)gameTime.ElapsedGameTime.TotalSeconds;
-
-            if (Time > 1f)
-            {
-                //Console.WriteLine(Count);
-                Count = 0;
-                Time -= 1f;
             }
 
             base.Update(gameTime);
@@ -317,11 +276,7 @@ namespace WaterPolygonizerDemo
         /// <param name="gameTime">Provides a snapshot of timing values.</param>
         protected override void Draw(GameTime gameTime)
         {
-            hasdrawn = true;
-
             graphics.GraphicsDevice.Clear(Color.CornflowerBlue);
-
-            // TODO: Add your drawing code here
 
             // draw floor
 
@@ -332,11 +287,10 @@ namespace WaterPolygonizerDemo
             foreach (EffectPass pass in effect.CurrentTechnique.Passes)
             {
                 pass.Begin();
-                GraphicsDevice.DrawUserPrimitives<VertexPositionNormal>(PrimitiveType.TriangleList, floorVertices, 0, 2);
+                GraphicsDevice.DrawUserPrimitives(PrimitiveType.TriangleList, floorVertices, 0, 2);
                 pass.End();
             }
             effect.End();
-
 
             if (polygonizer.Paused)
             {
@@ -354,6 +308,7 @@ namespace WaterPolygonizerDemo
             }
             effect.Parameters["materialColor"].SetValue(new Vector4(.5f, .6f, .9f, .2f));
 
+#if !USE_ARRAY
 			if (polygonizer.vertexList.Count > 0 && !polygonizer.Paused)
             {
                 graphics.GraphicsDevice.VertexDeclaration = vpnDeclaration;
@@ -361,13 +316,26 @@ namespace WaterPolygonizerDemo
                 foreach (EffectPass pass in effect.CurrentTechnique.Passes)
                 {
                     pass.Begin();
-					GraphicsDevice.DrawUserPrimitives<VertexPositionNormal>(PrimitiveType.TriangleList, polygonizer.vertexList.ToArray(), 0, polygonizer.vertexList.Count / 3);
+					GraphicsDevice.DrawUserPrimitives(PrimitiveType.TriangleList, polygonizer.vertexList.ToArray() , 0, polygonizer.vertexList.Count / 3);
                     pass.End();
                 }
                 effect.End();
             }
+#else
+			if (polygonizer.currentframeprimatives > 0 && !polygonizer.Paused)
+            {
+                graphics.GraphicsDevice.VertexDeclaration = vpnDeclaration;
+                effect.Begin();
+                foreach (EffectPass pass in effect.CurrentTechnique.Passes)
+                {
+                    pass.Begin();
+					GraphicsDevice.DrawUserPrimitives(PrimitiveType.TriangleList, polygonizer.VertexList, 0, polygonizer.currentframeprimatives);
+                    pass.End();
+                }
+                effect.End();
+            }
+#endif
 
-            base.Draw(gameTime);
 #if DEBUG
             spriteBatch.Begin();
 			spriteBatch.DrawString(font, "Phys Time: " + waterbody.timer.Elapsed.TotalSeconds, Vector2.Zero, Color.White);
@@ -376,6 +344,10 @@ namespace WaterPolygonizerDemo
 			spriteBatch.DrawString(font, "Frames:    " + (++framecount), new Vector2(0, 72), Color.White);
             spriteBatch.End();
 #endif
+
+			hasdrawn = true;
+
+			base.Draw(gameTime);
         }
     }
 }
