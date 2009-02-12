@@ -36,6 +36,7 @@ namespace WaterPolygonizerDemo
 		public readonly List<VertexPositionNormal> vertexList = new List<VertexPositionNormal>(1 << 16);
 #else
 		public readonly VertexPositionNormal[] VertexList = new VertexPositionNormal[2<<20];
+		//public readonly VertexPositionNormal[] VertexList = new VertexPositionNormal[(GRID_DIMENSION*GRID_DIMENSION*GRID_DIMENSION)/8];
 
     	public int currentframeposition;
     	public int currentframeprimatives;

@@ -35,11 +35,11 @@ namespace WaterPolygonizerDemo
 		private float SpikyKern;
 		private float LapKern;
 
-		internal readonly Vector3 Min = new Vector3(-60f, -60f, -60f);
-		internal readonly Vector3 Max = new Vector3(60f, 60f, 60f);
+		internal readonly Vector3 Min = new Vector3(-60f, 0f, -60f);
+		internal readonly Vector3 Max = new Vector3(60f, 100f, 60f);
 
-		internal readonly Vector3 InitMin = new Vector3(0f, -40f, 0f);
-		internal readonly Vector3 InitMax = new Vector3(20f, 48f, 20f);
+		internal readonly Vector3 InitMin = new Vector3(-40f, 6f, -40f);
+		internal readonly Vector3 InitMax = new Vector3(0f, 98f, -28f);
 
 		//Vector3 Min = new Vector3(-25f, 0f, -25f);
 		//Vector3 Max = new Vector3(25f, 100f, 25f);

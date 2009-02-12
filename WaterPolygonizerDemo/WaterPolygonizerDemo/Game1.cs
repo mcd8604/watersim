@@ -4,6 +4,8 @@
 // Remember to set in Polygonizer too
 #define USE_ARRAY
 
+#undef WRITE_AVI
+
 using System;
 using AviAccess;
 using Microsoft.Xna.Framework;
@@ -46,7 +48,9 @@ namespace WaterPolygonizerDemo
 		private Matrix view;
 		private Matrix projection;
 
+#if WRITE_AVI
     	private readonly AviWriter aviWriter;
+#endif
 
     	private MouseState lastState;
 		private MouseState curState;
@@ -61,9 +65,11 @@ namespace WaterPolygonizerDemo
             polygonizer = new Polygonizer(waterbody);
             InitializeFloor();
 
+#if WRITE_AVI
             aviWriter = new AviWriter(this, "test.avi");
 
             Components.Add(aviWriter);
+#endif
         }
 
         private void InitializeFloor()
@@ -134,9 +140,9 @@ namespace WaterPolygonizerDemo
         private void resetCamera()
         {
             //camPosition = waterbody.PositionMax * 2;
-            camPosition = new Vector3(120, 40, 120);
+            camPosition = new Vector3(120, 100, 120);
             //camTarget = waterbody.PositionMin + ((waterbody.PositionMax - waterbody.PositionMin) / 2);
-            camTarget = new Vector3(0, -40, 0);
+            camTarget = new Vector3(0, 20, 0);
             view = Matrix.CreateLookAt(camPosition, camTarget, Vector3.Up);
             if (effect != null)
             {
@@ -168,7 +174,7 @@ namespace WaterPolygonizerDemo
             effect.Parameters["View"].SetValue(view);
             effect.Parameters["Projection"].SetValue(projection);
 
-            effect.Parameters["lightPos"].SetValue(new Vector3(20f, 20f, 20f));
+            effect.Parameters["lightPos"].SetValue(new Vector3(40f, 100f, 20f));
             effect.Parameters["lightColor"].SetValue(Vector4.One);
             effect.Parameters["cameraPos"].SetValue(camPosition);
 
@@ -261,7 +267,9 @@ namespace WaterPolygonizerDemo
                 catch (Exception e)
                 {
                     Console.WriteLine(e);
+#if WRITE_AVI
                     aviWriter.Close();
+#endif
 					Exit();
 					return;
                 }
