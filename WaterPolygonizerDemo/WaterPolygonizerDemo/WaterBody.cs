@@ -92,7 +92,7 @@ namespace WaterPolygonizerDemo
 		{
 			float delta = ParticleDistance * 0.87f / SimScale;
 
-			List<Water> list = new List<Water>();
+			List<Water> list = new List<Water>((int)(((InitMax.Z - InitMin.Z) / delta) + ((InitMax.Y - InitMin.Y) / delta) + ((InitMax.X - InitMin.X) / delta)));
 
 			for (float z = InitMin.Z; z <= InitMax.Z; z += delta)
 			{
@@ -116,7 +116,7 @@ namespace WaterPolygonizerDemo
 		{
 			float delta = ParticleDistance * 0.87f / SimScale;
 
-			List<Water> list = new List<Water>();
+			List<Water> list = new List<Water>((int)(((initMax.Z - initMin.Z) / delta) + ((initMax.Y - initMin.Y) / delta) + ((initMax.X - initMin.X) / delta)));
 
 			for (float z = initMin.Z; z <= initMax.Z; z += delta)
 			{
