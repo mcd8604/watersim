@@ -62,6 +62,7 @@ namespace WaterPolygonizerDemo
             Content.RootDirectory = "Content";
 
             waterbody = new WaterBody();
+			waterbody.Spawn();
             polygonizer = new Polygonizer(waterbody);
             InitializeFloor();
 
@@ -219,6 +220,7 @@ namespace WaterPolygonizerDemo
             if (keyboard.IsKeyDown(Keys.Space))
             {
                 waterbody = new WaterBody();
+				waterbody.Spawn();
                 polygonizer = new Polygonizer(waterbody);
                 resetCamera();
             }
@@ -242,6 +244,8 @@ namespace WaterPolygonizerDemo
             {
                 polygonizer.Paused = false;
             }
+
+			waterbody.control = keyboard.IsKeyDown(Keys.C);
 
             if (hasdrawn && !paused)
             {

@@ -1,5 +1,7 @@
 #define DYNAMIC_GRID
 
+#define PRECISE_CONTROL
+
 using System;
 using System.Collections.Generic;
 #if DEBUG
@@ -62,10 +64,12 @@ namespace WaterPolygonizerDemo
 		public Stopwatch timer;
 #endif
 
+		internal bool control;
+		internal float controlStrength = 16;
+
 		public WaterBody()
 		{
 			CalcKernels();
-			Spawn();
 			if (UseGrid)
 			{
 				SetupGrid();
@@ -84,7 +88,7 @@ namespace WaterPolygonizerDemo
 			LapKern = 45f / (MathHelper.Pi * (float)Math.Pow(SmoothRadius, 6));
 		}
 
-		private void Spawn()
+		public void Spawn()
 		{
 			float delta = ParticleDistance * 0.87f / SimScale;
 
@@ -107,6 +111,67 @@ namespace WaterPolygonizerDemo
 
 			water = list.ToArray();
 		}
+
+		public void Spawn(Vector3 initMin, Vector3 initMax)
+		{
+			float delta = ParticleDistance * 0.87f / SimScale;
+
+			List<Water> list = new List<Water>();
+
+			for (float z = initMin.Z; z <= initMax.Z; z += delta)
+			{
+				for (float y = initMin.Y; y <= initMax.Y; y += delta)
+				{
+					for (float x = initMin.X; x <= initMax.X; x += delta)
+					{
+						Water p = new Water(new Vector3(x, y, z));
+						p.Position.X += -0.05f + ((float)Rand.NextDouble() * 0.1f);
+						p.Position.Y += -0.05f + ((float)Rand.NextDouble() * 0.1f);
+						p.Position.Z += -0.05f + ((float)Rand.NextDouble() * 0.1f);
+						list.Add(p);
+					}
+				}
+			}
+
+			water = list.ToArray();
+		}
+
+		public void Spawn(int count)
+		{
+			float delta = ParticleDistance * 0.87f / SimScale;
+
+			water = new Water[count];
+
+			for (float y = Min.Y; y <= Max.Y; y += delta)
+			{
+				for (float z = Min.Z; z <= Max.Z; z += delta)
+				{
+					for (float x = Min.X; x <= Max.X; x += delta)
+					{
+						Water p = new Water(new Vector3(x, y, z));
+						p.Position.X += -0.05f + ((float)Rand.NextDouble() * 0.1f);
+						p.Position.Y += -0.05f + ((float)Rand.NextDouble() * 0.1f);
+						p.Position.Z += -0.05f + ((float)Rand.NextDouble() * 0.1f);
+						water[--count] = p;
+						if (count <= 0)
+						{
+							return;
+						}
+					}
+				}
+			}
+		}
+
+		public void setControlPoints(Vector3[] points)
+		{
+			int max = Math.Min(points.Length, water.Length);
+
+			for (int i = 0; i < max; ++i)
+			{
+				water[i].Position = water[i].ControlPosition = points[i];
+			}
+		}
+
 #if !DYNAMIC_GRID
 		private void SetupGrid()
 		{
@@ -765,12 +830,41 @@ namespace WaterPolygonizerDemo
 					acceleration.Z -= adjustment;
 				}
 
+#if PRECISE_CONTROL
+				Vector3 v = Vector3.Zero;
+#endif
+				if (control && a.Position != a.ControlPosition)
+				{
+#if PRECISE_CONTROL
+					v = (a.ControlPosition - a.Position);
+					float len = v.Length();
+					Vector3 norm = Vector3.Normalize(v);
+					acceleration += (norm * controlStrength) + ((len - 1) * norm * controlStrength / 256);
+#else
+					acceleration += (Vector3.Normalize(a.ControlPosition - a.Position) * controlStrength) + ((a.ControlPosition - a.Position) * controlStrength / 256f);
+#endif
+				}
+
 				Vector3 nextVelocity = a.Velocity + ((acceleration + Gravity) * DT);
 
 				a.VelocityEval = (a.Velocity + nextVelocity) * 0.5f;
 				a.Velocity = nextVelocity;
 
 				a.Position += nextVelocity * (DT / SimScale);
+
+#if PRECISE_CONTROL
+				if (control && a.Position != a.ControlPosition)
+				{
+					Vector3 v2 = (a.ControlPosition - a.Position);
+					if (Vector3.Dot(v, v2) < 0)
+					{
+						a.Position = a.ControlPosition;
+						a.Velocity = Vector3.Zero;
+						a.VelocityEval = Vector3.Zero;
+						a.Acceleration = Vector3.Zero;
+					}
+				}
+#endif
 			}
 		}
 	}
