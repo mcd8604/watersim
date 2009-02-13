@@ -25,7 +25,10 @@ namespace WaterPolygonizerDemo
 
 		public Water(Vector3 startPosition)
 		{
+			ControlPosition = startPosition;
 			Position = startPosition;
 		}
+
+		internal Vector3 ControlPosition = Vector3.Zero;
 	}
 }
