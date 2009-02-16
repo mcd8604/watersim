@@ -63,7 +63,6 @@ namespace WaterPolygonizerDemo
             Content.RootDirectory = "Content";
 
             waterbody = new WaterBody();
-			waterbody.Spawn(10000);
             polygonizer = new Polygonizer(waterbody);
             InitializeFloor();
 
@@ -129,9 +128,8 @@ namespace WaterPolygonizerDemo
 
             InitializeMatrices();
             InitializeEffect();
-            InitializeVertices();
 
-            Model model = Content.Load<Model>("haiMike");
+            Model model = Content.Load<Model>("sphere_big");
 
             List<Vector3> vertices = new List<Vector3>();
 
@@ -150,7 +148,8 @@ namespace WaterPolygonizerDemo
             	Vector3 temp;
             	foreach (var vector3 in meshData)
             	{
-            		temp = vector3;
+                    temp = vector3;
+                    temp *= 2;
             		temp.Y += 50;
             		if (!vertices.Contains(temp))
             		{
@@ -159,7 +158,9 @@ namespace WaterPolygonizerDemo
             	}
             }
 
+            waterbody.Spawn(vertices.Count);
             waterbody.setControlPoints(vertices.ToArray());
+            InitializeVertices();
         }
 
         private void InitializeMatrices()
