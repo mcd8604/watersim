@@ -11,6 +11,7 @@ using AviAccess;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using System.Collections.Generic;
 
 namespace WaterPolygonizerDemo
 {
@@ -129,6 +130,27 @@ namespace WaterPolygonizerDemo
             InitializeMatrices();
             InitializeEffect();
             InitializeVertices();
+
+            Model model = Content.Load<Model>("haiMike");
+
+            List<Vector3> vertices = new List<Vector3>();
+
+            foreach (ModelMesh mesh in model.Meshes)
+            {
+                int numMeshVertices = 0;
+                
+                foreach (ModelMeshPart part in mesh.MeshParts)
+                {
+                    numMeshVertices += part.NumVertices;
+                }
+                
+                Vector3[] meshData = new Vector3[numMeshVertices];
+                mesh.VertexBuffer.GetData<Vector3>(meshData);
+
+                vertices.AddRange(meshData);
+            }
+
+            waterbody.setControlPoints(vertices.ToArray());
         }
 
         private void InitializeMatrices()
