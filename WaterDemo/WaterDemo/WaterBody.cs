@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+#if DEBUG
 using System.Diagnostics;
+#endif
 using System.Text;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -57,8 +59,9 @@ namespace WaterDemo
 		Vector3 GridResolution = Vector3.Zero;
 
 		public bool UseGrid = false;
-
+#if DEBUG
 		public Stopwatch timer;
+#endif
 
 		internal List<BoundingBox> collidables = new List<BoundingBox>();
 
@@ -74,12 +77,14 @@ namespace WaterDemo
 			{
 				SetupGrid();
 			}
+			
+#if DEBUG
 			timer = new Stopwatch();
-
 			//collidables.Add(new BoundingBox(-Min - new Vector3(10, 0, 10), -Min + new Vector3(0, 10, 0)));
 			collidables.Add(new BoundingBox(Min, Min + new Vector3(10, 10, 10)));
+#endif
 
-			solids.Add(new Solid(new Vector3(0, 20, 0)));
+			solids.Add(new Solid(new Vector3(0, 18, 0)));
 		}
 
 		private void CalcKernels()
@@ -183,7 +188,9 @@ namespace WaterDemo
 
 		public void Update()
 		{
+#if DEBUG
 			timer.Start();
+#endif
 
 			if (UseGrid)
 			{
@@ -200,10 +207,11 @@ namespace WaterDemo
 
 			doStuff();
 
-
+#if DEBUG
 			timer.Stop();
 			Console.WriteLine("Update: " + timer.Elapsed.TotalSeconds);
 			timer.Reset();
+#endif
 		}
 
 		private void findNeighbors()
@@ -650,6 +658,23 @@ namespace WaterDemo
 
 				solid.LastPosition = solid.Position;
 				solid.Position += nextVelocity * (DT / SimScale);
+
+				if (solid.Position.X > Max.X - (solid.radius/2))
+				{
+					solid.Position.X = Max.X - (solid.radius / 2);
+				}
+				if (solid.Position.X < Min.X + (solid.radius / 2))
+				{
+					solid.Position.X = Min.X + (solid.radius / 2);
+				}
+				if (solid.Position.Z > Max.Z - (solid.radius / 2))
+				{
+					solid.Position.Z = Max.Z - (solid.radius / 2);
+				}
+				if (solid.Position.Z < Min.Z + (solid.radius / 2))
+				{
+					solid.Position.Z = Min.Z + (solid.radius / 2);
+				}
 			}
 
 			foreach (Water a in water)

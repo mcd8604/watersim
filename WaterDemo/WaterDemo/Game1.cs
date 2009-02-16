@@ -245,6 +245,26 @@ namespace WaterDemo
 				paused = false;
 			}
 
+			if (keyboard.IsKeyDown(Keys.Right))
+			{
+				waterbody.solids[0].Acceleration.X += 1.5f;
+			}
+
+			if (keyboard.IsKeyDown(Keys.Left))
+			{
+				waterbody.solids[0].Acceleration.X -= 1.5f;
+			}
+
+			if (keyboard.IsKeyDown(Keys.Up))
+			{
+				waterbody.solids[0].Acceleration.Z -= 1.5f;
+			}
+
+			if (keyboard.IsKeyDown(Keys.Down))
+			{
+				waterbody.solids[0].Acceleration.Z += 1.5f;
+			}
+
 			waterbody.control = keyboard.IsKeyDown(Keys.C);
 
 			if (hasdrawn && !paused)
