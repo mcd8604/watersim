@@ -691,11 +691,14 @@ namespace WaterPolygonizerDemo
                 polyTime = sw.Elapsed.TotalSeconds;
                 sw.Reset();
 #endif
-            } else
+            }
+#if DEBUG
+			else
             {
             	gridTime = 0;
             	polyTime = 0;
             }
+#endif
         }
     }
 }
