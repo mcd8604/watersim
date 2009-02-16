@@ -63,7 +63,7 @@ namespace WaterPolygonizerDemo
             Content.RootDirectory = "Content";
 
             waterbody = new WaterBody();
-			waterbody.Spawn();
+			waterbody.Spawn(10000);
             polygonizer = new Polygonizer(waterbody);
             InitializeFloor();
 
@@ -147,7 +147,16 @@ namespace WaterPolygonizerDemo
                 Vector3[] meshData = new Vector3[numMeshVertices];
                 mesh.VertexBuffer.GetData<Vector3>(meshData);
 
-                vertices.AddRange(meshData);
+            	Vector3 temp;
+            	foreach (var vector3 in meshData)
+            	{
+            		temp = vector3;
+            		temp.Y += 50;
+            		if (!vertices.Contains(temp))
+            		{
+            			vertices.Add(temp);
+            		}
+            	}
             }
 
             waterbody.setControlPoints(vertices.ToArray());
