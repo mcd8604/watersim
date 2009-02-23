@@ -43,13 +43,6 @@ namespace WaterPolygonizerDemo
 		internal readonly Vector3 InitMin = new Vector3(-40f, 6f, -40f);
 		internal readonly Vector3 InitMax = new Vector3(0f, 98f, -28f);
 
-		//Vector3 Min = new Vector3(-25f, 0f, -25f);
-		//Vector3 Max = new Vector3(25f, 100f, 25f);
-
-		//Vector3 InitMin = new Vector3(-20f, 0f, -20f);
-		//Vector3 InitMax = new Vector3(-5f, 30f, 5f);
-
-
 		internal Water[] water;
 
 		internal List<Water>[, ,] watergrid;

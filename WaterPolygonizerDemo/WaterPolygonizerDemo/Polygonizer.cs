@@ -11,32 +11,23 @@ namespace WaterPolygonizerDemo
 {
     class Polygonizer
     {
-        //public const float RANGE = 30;
-        //private const float gridSize = RANGE / 32;
         private const int GRID_DIMENSION = 64;
-        //private float cutOff = 2f;
         private Vector3 gridCellSize;
         private Vector3 gridCellSizeInv;
 
-        private List<Water>[, ,] waterGrid;
-
         private float isoLevel;
-
-        //private float pointVal;
 
         private Vector3[, ,] gridPoints;
         private float[, ,] gridValues;
+        private List<Water>[, ,] waterGrid;
 
         private readonly WaterBody waterBody;
-
-        private BoundingBox boundingBox;
 
 #if !USE_ARRAY
 		// We know this is going to be a long list, give it a large-ish initial capacity to reduce re-allocs
 		public readonly List<VertexPositionNormal> vertexList = new List<VertexPositionNormal>(1 << 16);
 #else
 		public readonly VertexPositionNormal[] VertexList = new VertexPositionNormal[2<<20];
-		//public readonly VertexPositionNormal[] VertexList = new VertexPositionNormal[(GRID_DIMENSION*GRID_DIMENSION*GRID_DIMENSION)/8];
 
     	public int currentframeposition;
     	public int currentframeprimatives;
@@ -52,6 +43,9 @@ namespace WaterPolygonizerDemo
             initGrid();
         }
 
+        /// <summary>
+        /// Initialize data structures to hold grid positions, density values, and Water lists.
+        /// </summary>
         private void initGrid()
         {
             isoLevel = WaterBody.SmoothRadius / WaterBody.SimScale;
@@ -61,8 +55,6 @@ namespace WaterPolygonizerDemo
 
             gridCellSize = (PositionMax - PositionMin) / GRID_DIMENSION;
             gridCellSizeInv = new Vector3(1 / gridCellSize.X, 1 / gridCellSize.Y, 1 / gridCellSize.Z);
-
-        	boundingBox = new BoundingBox(PositionMin, PositionMax);
 
         	gridPoints = new Vector3[GRID_DIMENSION, GRID_DIMENSION, GRID_DIMENSION];
             gridValues = new float[GRID_DIMENSION, GRID_DIMENSION, GRID_DIMENSION];
@@ -85,6 +77,9 @@ namespace WaterPolygonizerDemo
             }
         }
 
+        /// <summary>
+        /// Updates the values and Water lists in the grid.
+        /// </summary>
         private void updateGrid()
         {
 			Vector3 PositionMin = waterBody.Min;
@@ -127,34 +122,6 @@ namespace WaterPolygonizerDemo
                         }
                     }
                 }
-
-                //Vector3 cellMin = gridPoints[x, y, z];
-                //Vector3 cellMax = cellMin + gridCellSize;
-
-                //int x = (int)((w.Position.X - waterBody.PositionMin.X) * gridCellSizeInv.X);
-                //int y = (int)((w.Position.Y - waterBody.PositionMin.Y) * gridCellSizeInv.Y);
-                //int z = (int)((w.Position.Z - waterBody.PositionMin.Z) * gridCellSizeInv.Z);
-
-                //if (x >= 0 &&
-                //    y >= 0 &&
-                //    z >= 0 &&
-                //    x < waterGrid.GetLength(0) &&
-                //    y < waterGrid.GetLength(1) &&
-                //    z < waterGrid.GetLength(2))
-                //{
-                //    waterGrid[x, y, z].Add(w);
-                //}
-
-                //if (w.Position.X >= cellMin.X &&
-                //    w.Position.Y >= cellMin.Y &&
-                //    w.Position.Z >= cellMin.Z &&
-
-                //    w.Position.X < cellMax.X &&
-                //    w.Position.Y < cellMax.Y &&
-                //    w.Position.Z < cellMax.Z)
-                //{
-                //    waterGrid[x, y, z].Add(w);
-                //}
             }
 
             // Calculate grid values
@@ -167,15 +134,9 @@ namespace WaterPolygonizerDemo
                     {                        
                         float value = 0f;
 
-
-
                         foreach (Water w in waterGrid[x, y, z])
                         {
-                            float distSq = Vector3.DistanceSquared(gridPoints[x, y, z] + (gridCellSize / 2), w.Position);
-
-                            //float dist = Vector3.DistanceSquared(gridPoints[x, y, z] + (gridCellSize / 2), w.Position);
-                            //if(dist <= cutOff)
-                            value += 1 / distSq;
+                            value += 1 / Vector3.DistanceSquared(gridPoints[x, y, z] + (gridCellSize / 2), w.Position);
                         }
 
                         gridValues[x, y, z] = value;
@@ -193,7 +154,7 @@ namespace WaterPolygonizerDemo
         /// 0 is not intersected, 1 is intersected.
         /// </summary>  
         /// <remarks>
-        /// Credit: Paul Bourke - http://local.wasp.uwa.edu.au/~pbourke/geometry/
+        /// Credit: Paul Bourke - http://local.wasp.uwa.edu.au/~pbourke/geometry/polygonise/
         /// </remarks> 
         readonly int[] edgeTable ={
             0x0  , 0x109, 0x203, 0x30a, 0x406, 0x50f, 0x605, 0x70c,
@@ -233,7 +194,7 @@ namespace WaterPolygonizerDemo
         /// Contains the indices for triangles of each edge combination
         /// </summary>
         /// <remarks>
-        /// Credit: Paul Bourke - http://local.wasp.uwa.edu.au/~pbourke/geometry/
+        /// Credit: Paul Bourke - http://local.wasp.uwa.edu.au/~pbourke/geometry/polygonise/
         /// </remarks>
         readonly int[,] triTable =
             {{-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
@@ -499,7 +460,7 @@ namespace WaterPolygonizerDemo
         /// Calculate the triangular facets required to represent the isosurface through each grid cell.
         /// </summary>
         /// <remarks>
-        /// Credit: Paul Bourke - http://local.wasp.uwa.edu.au/~pbourke/geometry/
+        /// Credit: Paul Bourke - http://local.wasp.uwa.edu.au/~pbourke/geometry/polygonise/
         /// </remarks>
         /// <param name="isolevel"></param>
         void Polygonise(float isolevel)
@@ -524,15 +485,6 @@ namespace WaterPolygonizerDemo
                         // Determine the index into the edge table which
                         // tells us which vertices are inside of the surface
 
-                        //float value1 = waterBody.watergrid[x, y, z].Count * pointVal;
-                        //float value2 = waterBody.watergrid[x + 1, y, z].Count * pointVal;
-                        //float value3 = waterBody.watergrid[x + 1, y, z + 1].Count * pointVal;
-                        //float value4 = waterBody.watergrid[x, y, z + 1].Count * pointVal;
-                        //float value5 = waterBody.watergrid[x, y + 1, z].Count * pointVal;
-                        //float value6 = waterBody.watergrid[x + 1, y + 1, z].Count * pointVal;
-                        //float value7 = waterBody.watergrid[x + 1, y + 1, z + 1].Count * pointVal;
-                        //float value8 = waterBody.watergrid[x, y + 1, z + 1].Count * pointVal;
-
                         float value1 = gridValues[x, y, z];
                         float value2 = gridValues[x + 1, y, z];
                         float value3 = gridValues[x + 1, y, z + 1];
@@ -556,24 +508,7 @@ namespace WaterPolygonizerDemo
                         if (edgeTable[cubeindex] != 0)
                         {
                             // Find the vertices where the surface intersects the cube
-                            //Vector3 vertex1 = gridPoints[x, y, z];
-                            //Vector3 vertex2 = gridPoints[x + 1, y, z];
-                            //Vector3 vertex3 = gridPoints[x + 1, y, z + 1];
-                            //Vector3 vertex4 = gridPoints[x, y, z + 1];
-                            //Vector3 vertex5 = gridPoints[x, y + 1, z];
-                            //Vector3 vertex6 = gridPoints[x + 1, y + 1, z];
-                            //Vector3 vertex7 = gridPoints[x + 1, y + 1, z + 1];
-                            //Vector3 vertex8 = gridPoints[x, y + 1, z + 1];
-
-                            //Vector3 vertex1 = waterBody.GridPositionMin + Vector3.Multiply(new Vector3(x, y, z), waterBody.CellSize);
-                            //Vector3 vertex2 = waterBody.GridPositionMin + Vector3.Multiply(new Vector3(x + 1, y, z), waterBody.CellSize);
-                            //Vector3 vertex3 = waterBody.GridPositionMin + Vector3.Multiply(new Vector3(x + 1, y, z + 1), waterBody.CellSize);
-                            //Vector3 vertex4 = waterBody.GridPositionMin + Vector3.Multiply(new Vector3(x, y, z + 1), waterBody.CellSize);
-                            //Vector3 vertex5 = waterBody.GridPositionMin + Vector3.Multiply(new Vector3(x, y + 1, z), waterBody.CellSize);
-                            //Vector3 vertex6 = waterBody.GridPositionMin + Vector3.Multiply(new Vector3(x + 1, y + 1, z), waterBody.CellSize);;
-                            //Vector3 vertex7 = waterBody.GridPositionMin + Vector3.Multiply(new Vector3(x + 1, y + 1, z + 1), waterBody.CellSize);;
-                            //Vector3 vertex8 = waterBody.GridPositionMin + Vector3.Multiply(new Vector3(x, y + 1, z + 1), waterBody.CellSize);;
-
+                         
 							intersections[0] = (edgeTable[cubeindex] & 1) != 0 ? VertexInterp(isolevel, gridPoints[x, y, z], gridPoints[x + 1, y, z], value1, value2) : Vector3.Zero;
                         	intersections[1] = (edgeTable[cubeindex] & 2) != 0 ? VertexInterp(isolevel, gridPoints[x + 1, y, z], gridPoints[x + 1, y, z + 1], value2, value3) : Vector3.Zero;
 							intersections[2] = (edgeTable[cubeindex] & 4) != 0 ? VertexInterp(isolevel, gridPoints[x + 1, y, z + 1], gridPoints[x, y, z + 1], value3, value4) : Vector3.Zero;
@@ -616,35 +551,12 @@ namespace WaterPolygonizerDemo
                     }
                 }
             }
-
-            // Average the normals
-            /*List<VertexPositionNormalTexture> averagedVertexList = new List<VertexPositionNormalTexture>();
-            for(int i = 0; i < vertexList.Count; ++i)
-            {
-                VertexPositionNormalTexture v = vertexList[i];
-                Vector3 avgNormal = Vector3.Zero;
-                foreach (VertexPositionNormalTexture n in vertexList)
-                {
-                    if (v.Position.Equals(n.Position))
-                    {
-                        avgNormal += n.Normal;
-                    }
-                }
-                avgNormal.Normalize();
-                averagedVertexList.Add(new VertexPositionNormalTexture(v.Position, avgNormal, v.TextureCoordinate));
-            }*/
         }
 
         /// <summary>
         /// Linearly interpolate the position where an isosurface cuts
         /// an edge between two vertices, each with their own scalar value
         /// </summary>
-        /// <param name="isolevel"></param>
-        /// <param name="v1"></param>
-        /// <param name="v2"></param>
-        /// <param name="v1Value"></param>
-        /// <param name="v2Value"></param>
-        /// <returns></returns>
         private static Vector3 VertexInterp(float isolevel, Vector3 v1, Vector3 v2, float v1Value, float v2Value)
         {
             return Vector3.Lerp(v1, v2, (isolevel - v1Value) / (v2Value - v1Value));

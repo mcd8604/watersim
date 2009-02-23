@@ -39,7 +39,6 @@ namespace WaterPolygonizerDemo
 		private bool hasdrawn;
 		private bool paused;
 
-        //BasicEffect effect;
 		private Effect effect;
 
 		private Vector3 camPosition;
@@ -129,6 +128,15 @@ namespace WaterPolygonizerDemo
             InitializeMatrices();
             InitializeEffect();
 
+            LoadModel();
+            InitializeVertices();
+        }
+
+        /// <summary>
+        /// Loads a model and sets the vertices as control points in the WaterBodys
+        /// </summary>
+        private void LoadModel()
+        {
             Model model = Content.Load<Model>("sphere_big");
 
             List<Vector3> vertices = new List<Vector3>();
@@ -136,31 +144,30 @@ namespace WaterPolygonizerDemo
             foreach (ModelMesh mesh in model.Meshes)
             {
                 int numMeshVertices = 0;
-                
+
                 foreach (ModelMeshPart part in mesh.MeshParts)
                 {
                     numMeshVertices += part.NumVertices;
                 }
-                
+
                 Vector3[] meshData = new Vector3[numMeshVertices];
                 mesh.VertexBuffer.GetData<Vector3>(meshData);
 
-            	Vector3 temp;
-            	foreach (var vector3 in meshData)
-            	{
+                Vector3 temp;
+                foreach (var vector3 in meshData)
+                {
                     temp = vector3;
                     temp *= 2;
-            		temp.Y += 50;
-            		if (!vertices.Contains(temp))
-            		{
-            			vertices.Add(temp);
-            		}
-            	}
+                    temp.Y += 50;
+                    if (!vertices.Contains(temp))
+                    {
+                        vertices.Add(temp);
+                    }
+                }
             }
 
             waterbody.Spawn(vertices.Count);
             waterbody.setControlPoints(vertices.ToArray());
-            InitializeVertices();
         }
 
         private void InitializeMatrices()
@@ -186,21 +193,6 @@ namespace WaterPolygonizerDemo
 
         private void InitializeEffect()
         {
-            //effect = new BasicEffect(GraphicsDevice, new EffectPool());
-
-            //effect.World = world;
-            //effect.View = view;
-            //effect.Projection = projection;
-
-            //effect.EnableDefaultLighting();
-
-            //effect.AmbientLightColor = new Vector3(0.0f, 0.0f, 0.2f);
-
-            //effect.DirectionalLight0.Enabled = true;
-            //effect.DirectionalLight0.DiffuseColor = new Vector3(0.25f, .25f, .25f);
-            //effect.DirectionalLight0.Direction = Vector3.Normalize(new Vector3(-1, 2, 1));
-            //effect.DirectionalLight0.SpecularColor = new Vector3(0.75f, 0.75f, 75f);
-
             effect = Content.Load<Effect>("Basic");
 
             effect.Parameters["World"].SetValue(world);
