@@ -1,9 +1,10 @@
 // Change to #define to enforce minimum memory usage - kills CPU
 #undef FORCE_MINIMUM_MEMORY_USAGE
 
-// Remember to set in Polygonizer too
+// Use a pre-allocated array for polygons. Remember to set in Polygonizer too.
 #define USE_ARRAY
 
+// Stream each frame to an AVI file in the execution directory.
 #undef WRITE_AVI
 
 #undef CONTROL_POINTS
