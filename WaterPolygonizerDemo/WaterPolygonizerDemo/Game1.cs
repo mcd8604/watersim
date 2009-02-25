@@ -6,6 +6,8 @@
 
 #undef WRITE_AVI
 
+#undef CONTROL_POINTS
+
 using System;
 using AviAccess;
 using Microsoft.Xna.Framework;
@@ -66,7 +68,11 @@ namespace WaterPolygonizerDemo
             InitializeFloor();
 
 #if WRITE_AVI
-            aviWriter = new AviWriter(this, "test.avi");
+            int i = 0;
+            while (System.IO.File.Exists("Render_" + i + ".avi"))
+                ++i;
+
+            aviWriter = new AviWriter(this, "Render_" + i + ".avi");
 
             Components.Add(aviWriter);
 #endif
@@ -128,7 +134,11 @@ namespace WaterPolygonizerDemo
             InitializeMatrices();
             InitializeEffect();
 
+#if CONTROL_POINTS
             LoadModel();
+#else
+            waterbody.Spawn(waterbody.InitMin, waterbody.InitMax);
+#endif
             InitializeVertices();
         }
 
@@ -241,13 +251,17 @@ namespace WaterPolygonizerDemo
                 Exit();
             }
 
-            if (keyboard.IsKeyDown(Keys.Space))
-            {
-                waterbody = new WaterBody();
-				waterbody.Spawn();
-                polygonizer = new Polygonizer(waterbody);
-                resetCamera();
-            }
+//            if (keyboard.IsKeyDown(Keys.Space))
+//            {
+//                waterbody = new WaterBody();
+//#if CONTROL_POINTS
+//                waterbody.Spawn();
+//#else
+//                waterbody.Spawn(waterbody.InitMin, waterbody.InitMax);
+//#endif
+//                polygonizer = new Polygonizer(waterbody);
+//                resetCamera();
+//            }
 
             if (keyboard.IsKeyDown(Keys.P))
             {
@@ -268,9 +282,9 @@ namespace WaterPolygonizerDemo
             {
                 polygonizer.Paused = false;
             }
-
+#if CONTROL_POINTS
 			waterbody.control = keyboard.IsKeyDown(Keys.C);
-
+#endif
             if (hasdrawn && !paused)
             {
                 try

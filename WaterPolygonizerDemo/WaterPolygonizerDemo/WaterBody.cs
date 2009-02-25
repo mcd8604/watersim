@@ -57,7 +57,7 @@ namespace WaterPolygonizerDemo
 		public Stopwatch timer;
 #endif
 
-		internal bool control;
+		internal bool control = false;
 		internal float controlStrength = 16;
 
 		public WaterBody()
