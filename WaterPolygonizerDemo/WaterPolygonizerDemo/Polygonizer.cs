@@ -1,4 +1,5 @@
-﻿#define USE_ARRAY
+﻿// Use a pre-allocated array for polygon vertices.
+#define USE_ARRAY
 
 using System;
 using System.Collections.Generic;
