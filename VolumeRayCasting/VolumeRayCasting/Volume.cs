@@ -349,6 +349,7 @@ namespace VolumeRayCasting
                 float deltaZMin = (deltaMin.Z / delta.Z);
                 float deltaZMax = (deltaMax.Z / delta.Z);
 
+                // sampled density > 1
                 if ((deltaZMax * d0 + deltaZMin * d1) > 1)
                 {
                     return curDist;
@@ -365,6 +366,8 @@ namespace VolumeRayCasting
 
         public override Vector3 GetIntersectNormal(Vector3 intersection)
         {
+            // Get the grid index of the intersection point
+
             int xIndex = (int)((intersection.X - waterBody.PositionMin.X) / gridCellSize.X);
             int yIndex = (int)((intersection.Y - waterBody.PositionMin.Y) / gridCellSize.Y);
             int zIndex = (int)((intersection.Z - waterBody.PositionMin.Z) / gridCellSize.Z);
@@ -377,6 +380,9 @@ namespace VolumeRayCasting
 
             if (zIndex > gridPoints.GetLength(2) - 2)
                 zIndex = gridPoints.GetLength(2) - 2;
+
+            // Interpolate the gradient vector and negate it to get the normal
+            // TODO: store negated gradient (normal) instead
 
             Vector3 delta = (intersection - gridPoints[xIndex, yIndex, zIndex]) / (gridPoints[xIndex + 1, yIndex + 1, zIndex + 1] - gridPoints[xIndex, yIndex, zIndex]);
 
