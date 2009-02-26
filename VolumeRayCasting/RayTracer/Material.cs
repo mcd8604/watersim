@@ -6,25 +6,47 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace RayTracer
 {
+    /// <summary>
+    /// Defines properties of material to support the Phong illumination model.
+    /// </summary>
     public class Material
     {
         protected float kR;
-        public float ReflectionCoef
+        /// <summary>
+        /// Reflectivity of the material
+        /// </summary>
+        public float Reflectivity
         {
             get { return kR; }
             set { kR = value; }
         }
 
         protected float kT;
-        public float TransmissionCoef
+        /// <summary>
+        /// Transparency of material [0, 1]
+        /// </summary>
+        public float Transparency
         {
             get { return kT; }
             set { kT = value; }
         }
 
+        protected float n;
+        /// <summary>
+        /// Index of refraction for transparency
+        /// </summary>
+        public float RefractionIndex
+        {
+            get { return n; }
+            set { n = value; }
+        }
+
         #region Phong parameters
 
         protected float ambientStrength;
+        /// <summary>
+        /// Ambient light strength [0, 1]
+        /// </summary>
         public float AmbientStrength
         {
             get { return ambientStrength; }
@@ -32,6 +54,9 @@ namespace RayTracer
         }
 
         protected float diffuseStrength;
+        /// <summary>
+        /// Diffuse light strength [0, 1]
+        /// </summary>
         public float DiffuseStrength
         {
             get { return diffuseStrength; }
@@ -39,6 +64,9 @@ namespace RayTracer
         }
 
         protected float specularStrength;
+        /// <summary>
+        /// Specular light strength [0, 1]
+        /// </summary>
         public float SpecularStrength
         {
             get { return specularStrength; }
@@ -46,6 +74,9 @@ namespace RayTracer
         }
 
         protected double exponent;
+        /// <summary>
+        /// Exponent of specular lighting
+        /// </summary>
         public double Exponent
         {
             get { return exponent; }
@@ -56,16 +87,19 @@ namespace RayTracer
 
         protected Vector4 ambientColor = Vector4.Zero;
 
+        /// <summary>
+        /// Returns the ambient color of the material.
+        /// </summary>
+        /// <returns>The ambient color of the material.</returns>
         public virtual Vector4 getAmbientColor()
         {
             return ambientColor;
         }
 
-        public virtual Vector4 getAmbientColor(float u, float v)
-        {
-            return ambientColor;
-        }
-
+        /// <summary>
+        /// Sets the ambient color of the material.
+        /// </summary>
+        /// <param name="color">Ambient color</param>
         public virtual void setAmbientColor(Vector4 color)
         {
             ambientColor = color;
@@ -73,16 +107,19 @@ namespace RayTracer
 
         protected Vector4 diffuseColor = Vector4.Zero;
 
+        /// <summary>
+        /// Returns the diffuse color of the material.
+        /// </summary>
+        /// <returns>The diffuse color of the material.</returns>
         public virtual Vector4 getDiffuseColor()
         {
             return diffuseColor;
         }
 
-        public virtual Vector4 getDiffuseColor(float u, float v)
-        {
-            return diffuseColor;
-        }
-
+        /// <summary>
+        /// Sets the diffuse color of the material.
+        /// </summary>
+        /// <param name="color">Diffuse color</param>
         public virtual void setDiffuseColor(Vector4 color)
         {
             diffuseColor = color;
@@ -90,44 +127,22 @@ namespace RayTracer
 
         protected Vector4 specularColor = Vector4.One;
 
+        /// <summary>
+        /// Returns the specular color of the material.
+        /// </summary>
+        /// <returns>The specular color of the material.</returns>
         public virtual Vector4 getSpecularColor()
         {
             return specularColor;
         }
 
+        /// <summary>
+        /// Sets the specular color of the material.
+        /// </summary>
+        /// <param name="color">Specular color</param>
         public virtual void setSpecularColor(Vector4 color)
         {
             specularColor = color;
-        } 
-
-        public Vector4 calculateAmbient(Vector4 ambientLight, float u, float v)
-        {
-            return ambientStrength * getAmbientColor(u, v) * ambientLight;
-        }
-
-        public Vector4 calculateDiffuse(Vector3 intersection, Vector3 normal, Light l, Vector3 lightVector, float u, float v)
-        {
-            Vector4 diffuse = l.LightColor * getDiffuseColor(u, v);
-
-            float diffuseAmount = Math.Abs(Vector3.Dot(lightVector, normal));
-
-            return diffuseStrength * diffuse * diffuseAmount;
-        }
-
-        public Vector4 calculateSpecular(Vector3 intersection, Vector3 normal, Light l, Vector3 lightVector, Vector3 viewVector)
-        {
-            Vector4 specular = l.LightColor * getSpecularColor();
-
-            Vector3 reflectedVector = Vector3.Reflect(lightVector, normal);
-
-            double dot = (double)Vector3.Dot(reflectedVector, viewVector);
-
-            if (dot >= 0)
-                return Vector4.Zero;
-
-            float specularAmount = (float)Math.Pow(dot, exponent);
-
-            return specularStrength * specular * specularAmount;
         }
     }
 }
