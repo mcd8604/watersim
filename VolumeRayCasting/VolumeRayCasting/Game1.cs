@@ -1,4 +1,4 @@
-#define WRITE_AVI
+#undef WRITE_AVI
 
 using System;
 using System.Collections.Generic;
