@@ -176,16 +176,16 @@ namespace RayTracer
             if (intersectDist != null)
             {
                 intersectPoint = ray.Position + (ray.Direction * (float)intersectDist);
-                Vector3 intersectNormal = rt.GetIntersectNormal(ray, (float)intersectDist);
+                Vector3 intersectNormal = rt.GetIntersectNormal(intersectPoint);
                 Vector3 viewVector = Vector3.Normalize(ray.Position - intersectPoint);
 
-                //Vector4 totalLight = rt.calculateAmbient(ambientLight, ray, (float)intersectDist);
-                Vector4 totalLight = rt.GetLighting(ambientLight, ray, (float)intersectDist, lights[0], viewVector);
-                
+                Vector4 totalLight = rt.calculateAmbient(ambientLight, ray, (float)intersectDist);
+                //Vector4 totalLight = rt.GetLighting(ambientLight, ray, (float)intersectDist, lights[0], viewVector);
+
                 ////feed this all into the volume, calc diffuse and specular all together for now
-                //Vector3 lightVector = Vector3.Normalize(lights[0].Position - intersectPoint);
-                //totalLight += rt.calculateDiffuse(intersectPoint, intersectNormal, lights[0], lightVector);
-                //totalLight += rt.calculateSpecular(intersectPoint, intersectNormal, lights[0], lightVector, viewVector);
+                Vector3 lightVector = Vector3.Normalize(lights[0].Position - intersectPoint);
+                totalLight += rt.calculateDiffuse(intersectPoint, intersectNormal, lights[0], lightVector);
+                totalLight += rt.calculateSpecular(intersectPoint, intersectNormal, lights[0], lightVector, viewVector);
 
                 //totalLight += spawnShadowRay(ref intersectPoint, rt, ref intersectNormal, ref viewVector);
 

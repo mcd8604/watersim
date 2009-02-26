@@ -6,7 +6,7 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace RayTracer
 {
-    public class MaterialCircleGradient : Material
+    public class MaterialCircleGradient : Material, IMaterialTexture
     {
         Vector2 center = new Vector2(0.5f, 0.5f);
 
@@ -21,7 +21,7 @@ namespace RayTracer
             this.color2 = color2;
         }
 
-        private Vector4 getColor(float u, float v)
+        public Vector4 GetColor(float u, float v)
         {
             u = u % 1f;
             v = v % 1f;
@@ -38,16 +38,6 @@ namespace RayTracer
             {
                 return (per * color2) + ((1 - per) * color1);
             }
-        }
-
-        public override Vector4 getAmbientColor(float u, float v)
-        {
-            return ambientStrength * getColor(u, v); ;
-        }
-
-        public override Vector4 getDiffuseColor(float u, float v)
-        {
-            return diffuseStrength * getColor(u, v); ; 
         }
     }
 }

@@ -6,14 +6,14 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace RayTracer
 {
-    public class MaterialBullseye : Material
+    public class MaterialBullseye : Material, IMaterialTexture
     {
         Vector2 center = new Vector2(0.5f, 0.5f);
 
         private Vector4 red = Color.Red.ToVector4();
         private Vector4 yellow = Color.Yellow.ToVector4();
 
-        private Vector4 getColor(float u, float v)
+        public Vector4 GetColor(float u, float v)
         {
             u = u % 1f;
             v = v % 1f;
@@ -26,16 +26,6 @@ namespace RayTracer
             {
                 return yellow;
             }
-        }
-
-        public override Vector4 getAmbientColor(float u, float v)
-        {
-            return ambientStrength * getColor(u, v); ;
-        }
-
-        public override Vector4 getDiffuseColor(float u, float v)
-        {
-            return diffuseStrength * getColor(u, v); ; 
         }
     }
 }

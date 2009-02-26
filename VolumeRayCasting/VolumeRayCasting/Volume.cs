@@ -270,117 +270,22 @@ namespace VolumeRayCasting
             }
         }
 
-        public override Vector3 Center
-        {
-            get
-            {
-                throw new NotImplementedException();
-            }
-            set
-            {
-                throw new NotImplementedException();
-            }
-        }
-
         public override float? Intersects(Ray ray)
         {
-            return ray.Intersects(boundingBox);
+            float? macroDist = ray.Intersects(boundingBox);
+            if(macroDist == null)
+                return null;
 
-            //float? macroDist = ray.Intersects(boundingBox);
-
-            //if (macroDist != null)
-            //{
-            //    // travel along the ray until we find a cell with a value
-
-            //    float delta = gridCellSize.X / 4;
-            //    float curDist = (float)macroDist;
-            //    Vector3 microIntersection;
-            //    int xIndex;
-            //    int yIndex;
-            //    int zIndex;
-            //    ContainmentType containType;
-
-            //    do
-            //    {
-            //        microIntersection = ray.Position + (ray.Direction * curDist);
-            //        xIndex = (int)((microIntersection.X - waterBody.PositionMin.X) / gridCellSize.X);
-            //        yIndex = (int)((microIntersection.Y - waterBody.PositionMin.Y) / gridCellSize.Y);
-            //        zIndex = (int)((microIntersection.Z - waterBody.PositionMin.Z) / gridCellSize.Z);
-
-            //        if (xIndex < 0)
-            //            xIndex = 0;
-
-            //        if (yIndex < 0)
-            //            yIndex = 0;
-
-            //        if (zIndex < 0)
-            //            zIndex = 0;
-
-            //        if (xIndex > gridBoxes.GetLength(0) - 1)
-            //            xIndex = gridBoxes.GetLength(0) - 1;
-
-            //        if (yIndex > gridBoxes.GetLength(1) - 1)
-            //            yIndex = gridBoxes.GetLength(1) - 1;
-
-            //        if (zIndex > gridBoxes.GetLength(2) - 1)
-            //            zIndex = gridBoxes.GetLength(2) - 1;
-
-            //        if (gridValues[xIndex, yIndex, zIndex] > 0)
-            //            return ray.Intersects(gridBoxes[xIndex, yIndex, zIndex]);
-
-            //        curDist += delta;
-            //        containType = boundingBox.Contains(microIntersection);
-            //    } while (containType == ContainmentType.Contains || containType == ContainmentType.Intersects);
-            //}
-            //return null;
-        }
-
-        public override Vector3 GetIntersectNormal(Ray ray, float dist)
-        {
-            Vector3 intersection = Vector3.Zero;
-            getMicroIntersection(ref ray, dist, ref intersection);
-
-            int xIndex = (int)((intersection.X - waterBody.PositionMin.X) / gridCellSize.X);
-            int yIndex = (int)((intersection.Y - waterBody.PositionMin.Y) / gridCellSize.Y);
-            int zIndex = (int)((intersection.Z - waterBody.PositionMin.Z) / gridCellSize.Z);
-
-            if (xIndex > gridPoints.GetLength(0) - 2)
-                xIndex = gridPoints.GetLength(0) - 2;
-
-            if (yIndex > gridPoints.GetLength(1) - 2)
-                yIndex = gridPoints.GetLength(1) - 2;
-
-            if (zIndex > gridPoints.GetLength(2) - 2)
-                zIndex = gridPoints.GetLength(2) - 2;
-
-            return Vector3.Negate(gradient[xIndex, yIndex, zIndex]);
-
-            //return Vector3.Zero;
-        }
-
-
-        public override Vector4  GetLighting(Vector4 ambientLight, Ray ray, float dist, Light l, Vector3 viewVector)
-        {
-            // sum the density
-            
-            float density = 0f;
             float distDelta = gridCellSize.X;
-            float curDist = (float)dist;
+            float curDist = (float)macroDist;
             Vector3 microIntersection = Vector3.Zero;
             int xIndex;
             int yIndex;
             int zIndex;
             ContainmentType containType;
 
-            int count = 0;
-
             getMicroIntersection(ref ray, curDist, ref microIntersection);
             containType = boundingBox.Contains(microIntersection);
-
-            Vector3 surfaceIntersection = Vector3.Zero;
-            Vector3 intersectNormal = Vector3.Zero;
-
-            bool surfaceFound = false;
 
             while (containType == ContainmentType.Contains || containType == ContainmentType.Intersects)
             {
@@ -444,63 +349,171 @@ namespace VolumeRayCasting
                 float deltaZMin = (deltaMin.Z / delta.Z);
                 float deltaZMax = (deltaMax.Z / delta.Z);
 
-                density += deltaZMax * d0 + deltaZMin * d1;
-
-                if (!surfaceFound && density > 1)
+                if ((deltaZMax * d0 + deltaZMin * d1) > 1)
                 {
-                    surfaceIntersection = ray.Position + (ray.Direction * curDist);
-
-                    // interp normal 
-
-                    Vector3 n000 = gradient[xIndex, yIndex, zIndex];
-                    Vector3 n001 = gradient[xIndex, yIndex, zIndex + 1];
-                    Vector3 n010 = gradient[xIndex, yIndex + 1, zIndex];
-                    Vector3 n011 = gradient[xIndex, yIndex + 1, zIndex + 1];
-                    Vector3 n100 = gradient[xIndex + 1, yIndex, zIndex + 1];
-                    Vector3 n101 = gradient[xIndex + 1, yIndex, zIndex + 1];
-                    Vector3 n110 = gradient[xIndex + 1, yIndex + 1, zIndex];
-                    Vector3 n111 = gradient[xIndex + 1, yIndex + 1, zIndex + 1];
-
-                    Vector3 n00 = Vector3.Lerp(n000, n100, deltaXMin);//deltaXMax * n000 + deltaXMin * n100;
-                    Vector3 n01 = Vector3.Lerp(n001, n101, deltaXMin);//deltaXMax * n001 + deltaXMin * n101;
-                    Vector3 n11 = Vector3.Lerp(n011, n111, deltaXMin);//deltaXMax * n011 + deltaXMin * n111;
-                    Vector3 n10 = Vector3.Lerp(n010, n110, deltaXMin);//deltaXMax * n010 + deltaXMin * n110;
-
-                    //Vector3 n0 = deltaYMax * n00 + deltaYMin * n10;
-                    //Vector3 n1 = deltaYMax * n01 + deltaYMin * n11;
-                    Vector3 n0 = Vector3.Lerp(n00, n10, deltaYMin);
-                    Vector3 n1 = Vector3.Lerp(n01, n11, deltaYMin);
-
-                    //intersectNormal = deltaZMax * n0 + deltaZMin * n1;
-                    intersectNormal = Vector3.Normalize(Vector3.Negate(Vector3.Lerp(n0, n1, deltaZMin)));
-
-                    surfaceFound = true;
+                    return curDist;
                 }
 
                 curDist += distDelta;
-
-                ++count;
 
                 getMicroIntersection(ref ray, curDist, ref microIntersection);
                 containType = boundingBox.Contains(microIntersection);
             }
 
-            //density /= (curDist - dist) / distDelta;
+            return null;
+        }
 
-            density /= count;
+        public override Vector3 GetIntersectNormal(Vector3 intersection)
+        {
+            int xIndex = (int)((intersection.X - waterBody.PositionMin.X) / gridCellSize.X);
+            int yIndex = (int)((intersection.Y - waterBody.PositionMin.Y) / gridCellSize.Y);
+            int zIndex = (int)((intersection.Z - waterBody.PositionMin.Z) / gridCellSize.Z);
 
-            Vector4 baseColor = base.calculateAmbient(ambientLight, ray, dist) * density;
+            if (xIndex > gridPoints.GetLength(0) - 2)
+                xIndex = gridPoints.GetLength(0) - 2;
 
-            //if (density > 1) density = 1;
+            if (yIndex > gridPoints.GetLength(1) - 2)
+                yIndex = gridPoints.GetLength(1) - 2;
 
-            if (surfaceFound)
-            {
-                Vector3 lightVector = Vector3.Normalize(l.Position - surfaceIntersection);
-                baseColor += calculateDiffuse(surfaceIntersection, intersectNormal, l, lightVector);
-                baseColor += calculateSpecular(surfaceIntersection, intersectNormal, l, lightVector, viewVector);
-            }
+            if (zIndex > gridPoints.GetLength(2) - 2)
+                zIndex = gridPoints.GetLength(2) - 2;
 
-            return baseColor;// *waterBody.Scale;
+            Vector3 delta = (intersection - gridPoints[xIndex, yIndex, zIndex]) / (gridPoints[xIndex + 1, yIndex + 1, zIndex + 1] - gridPoints[xIndex, yIndex, zIndex]);
+
+            Vector3 n00 = Vector3.Lerp(gradient[xIndex, yIndex, zIndex], gradient[xIndex + 1, yIndex, zIndex + 1], delta.X);
+            Vector3 n01 = Vector3.Lerp(gradient[xIndex, yIndex, zIndex + 1], gradient[xIndex + 1, yIndex, zIndex + 1], delta.X);
+            Vector3 n11 = Vector3.Lerp(gradient[xIndex, yIndex + 1, zIndex + 1], gradient[xIndex + 1, yIndex + 1, zIndex + 1], delta.X);
+            Vector3 n10 = Vector3.Lerp(gradient[xIndex, yIndex + 1, zIndex], gradient[xIndex + 1, yIndex + 1, zIndex], delta.X);
+
+            Vector3 n0 = Vector3.Lerp(n00, n10, delta.Y);
+            Vector3 n1 = Vector3.Lerp(n01, n11, delta.Y);
+
+            return Vector3.Normalize(Vector3.Negate(Vector3.Lerp(n0, n1, delta.Z)));
+        }
+
+        //public override Vector4 GetLighting(Vector4 ambientLight, Ray ray, float dist, Light l, Vector3 viewVector)
+        //{
+        //    // sum the density
+            
+        //    float density = 0f;
+        //    float distDelta = gridCellSize.X;
+        //    float curDist = (float)dist;
+        //    Vector3 microIntersection = Vector3.Zero;
+        //    int xIndex;
+        //    int yIndex;
+        //    int zIndex;
+        //    ContainmentType containType;
+
+        //    int count = 0;
+
+        //    getMicroIntersection(ref ray, curDist, ref microIntersection);
+        //    containType = boundingBox.Contains(microIntersection);
+
+        //    Vector3 surfaceIntersection = Vector3.Zero;
+        //    Vector3 intersectNormal = Vector3.Zero;
+
+        //    bool surfaceFound = false;
+
+        //    while (containType == ContainmentType.Contains || containType == ContainmentType.Intersects)
+        //    {
+        //        xIndex = (int)((microIntersection.X - waterBody.PositionMin.X) / gridCellSize.X);
+        //        yIndex = (int)((microIntersection.Y - waterBody.PositionMin.Y) / gridCellSize.Y);
+        //        zIndex = (int)((microIntersection.Z - waterBody.PositionMin.Z) / gridCellSize.Z);
+
+        //        if (xIndex > gridPoints.GetLength(0) - 2)
+        //            xIndex = gridPoints.GetLength(0) - 2;
+
+        //        if (yIndex > gridPoints.GetLength(1) - 2)
+        //            yIndex = gridPoints.GetLength(1) - 2;
+
+        //        if (zIndex > gridPoints.GetLength(2) - 2)
+        //            zIndex = gridPoints.GetLength(2) - 2;
+
+        //        // trilinear interpolation
+
+        //        Vector3 c000 = gridPoints[xIndex, yIndex, zIndex];
+        //        Vector3 c111 = gridPoints[xIndex + 1, yIndex + 1, zIndex + 1];
+        //        Vector3 delta = c111 - c000;
+        //        Vector3 deltaMin = microIntersection - c000;
+        //        Vector3 deltaMax = c111 - microIntersection;
+
+        //        float d000 = gridValues[xIndex, yIndex, zIndex];
+        //        float d001 = gridValues[xIndex, yIndex, zIndex + 1];
+        //        float d010 = gridValues[xIndex, yIndex + 1, zIndex];
+        //        float d011 = gridValues[xIndex, yIndex + 1, zIndex + 1];
+        //        float d100 = gridValues[xIndex + 1, yIndex, zIndex + 1];
+        //        float d101 = gridValues[xIndex + 1, yIndex, zIndex + 1];
+        //        float d110 = gridValues[xIndex + 1, yIndex + 1, zIndex];
+        //        float d111 = gridValues[xIndex + 1, yIndex + 1, zIndex + 1];
+
+        //        // perform linear interpolation between:
+        //        //   C000 and C100 to find C00,
+        //        //   C001 and C101 to find C01,
+        //        //   C011 and C111 to find C11,
+        //        //   C010 and C110 to find C10.       
+
+        //        float deltaXMin = (deltaMin.X / delta.X);
+        //        float deltaXMax = (deltaMax.X / delta.X);
+
+        //        float d00 = deltaXMax * d000 + deltaXMin * d100;
+        //        float d01 = deltaXMax * d001 + deltaXMin * d101;
+        //        float d11 = deltaXMax * d011 + deltaXMin * d111;
+        //        float d10 = deltaXMax * d010 + deltaXMin * d110;
+
+        //        // perform linear interpolation between:
+        //        //      C00 and C10 to find C0,
+        //        //      C01 and C11 to find C1. 
+
+        //        float deltaYMin = (deltaMin.Y / delta.Y);
+        //        float deltaYMax = (deltaMax.Y / delta.Y);
+
+        //        float d0 = deltaYMax * d00 + deltaYMin * d10;
+        //        float d1 = deltaYMax * d01 + deltaYMin * d11;
+
+        //        // perform linear interpolation between: 
+        //        //      C0 and C1 to find c
+
+        //        float deltaZMin = (deltaMin.Z / delta.Z);
+        //        float deltaZMax = (deltaMax.Z / delta.Z);
+
+        //        density += deltaZMax * d0 + deltaZMin * d1;
+
+        //        if (!surfaceFound && density > 1)
+        //        {
+        //            surfaceIntersection = ray.Position + (ray.Direction * curDist);
+        //            intersectNormal = GetIntersectNormal(ray.Position + (ray.Direction * curDist));
+        //            surfaceFound = true;
+        //        }
+
+        //        curDist += distDelta;
+
+        //        ++count;
+
+        //        getMicroIntersection(ref ray, curDist, ref microIntersection);
+        //        containType = boundingBox.Contains(microIntersection);
+        //    }
+
+        //    //density /= (curDist - dist) / distDelta;
+
+        //    density /= count;
+
+        //    Vector4 baseColor = Vector4.Zero;//base.calculateAmbient(ambientLight, ray, dist) * density;
+
+        //    //if (density > 1) density = 1;
+
+        //    if (surfaceFound)
+        //    {
+        //        Vector3 lightVector = Vector3.Normalize(l.Position - surfaceIntersection);
+        //        baseColor += calculateDiffuse(surfaceIntersection, intersectNormal, l, lightVector);
+        //        baseColor += calculateSpecular(surfaceIntersection, intersectNormal, l, lightVector, viewVector);
+        //    }
+
+        //    return baseColor;// *waterBody.Scale;
+        //}
+
+        public override Vector4 calculateAmbient(Vector4 worldAmbient, Ray ray, float dist)
+        {
+            return base.calculateAmbient(worldAmbient, ray, dist);
         }
 
         private void getMicroIntersection(ref Ray ray, float curDist, ref Vector3 microIntersection)

@@ -6,26 +6,23 @@ using Microsoft.Xna.Framework;
 
 namespace RayTracer
 {
-    public class MaterialBitmap : Material
+    /// <summary>
+    /// A material that uses a Bitmap image to map texture coordinates.
+    /// </summary>
+    public class MaterialBitmap : Material, IMaterialTexture
     {
         private Bitmap image;
 
+        /// <summary>
+        /// Creates a new MaterialBitmap for a given image.
+        /// </summary>
+        /// <param name="image">The image.</param>
         public MaterialBitmap(Bitmap image)
         {
             this.image = image;
         }
 
-        public override Vector4 getDiffuseColor(float u, float v)
-        {
-            return getPixelColor(u, v);
-        }
-
-        public override Vector4 getAmbientColor(float u, float v)
-        {
-            return getPixelColor(u, v);
-        }
-
-        private Vector4 getPixelColor(float u, float v)
+        public Vector4 GetColor(float u, float v)
         {
             u = u % 1f;
             v = v % 1f;

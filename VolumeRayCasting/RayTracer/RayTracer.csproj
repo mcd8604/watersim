@@ -83,6 +83,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="IMaterialTexture.cs" />
     <Compile Include="Light.cs" />
     <Compile Include="Material.cs" />
     <Compile Include="MaterialBitmap.cs" />

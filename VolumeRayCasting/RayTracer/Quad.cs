@@ -5,28 +5,14 @@ using Microsoft.Xna.Framework;
 
 namespace RayTracer
 {
+    /// <summary>
+    /// A rectangular plane defined by four vectors.
+    /// </summary>
     public class Quad : RayTraceable
     {
         private Plane plane;
 
         protected BoundingBox boundingBox;
-        public BoundingBox MyBoundingBox
-        {
-            get { return boundingBox; }
-            set { boundingBox = value; }
-        }
-
-        public override Vector3 Center
-        {
-            get
-            {
-                throw new NotImplementedException();
-            }
-            set
-            {
-                throw new NotImplementedException();
-            }
-        }
 
         public Quad(Vector3 pt1, Vector3 pt2, Vector3 pt3, Vector3 pt4)
         {
@@ -40,23 +26,12 @@ namespace RayTracer
             boundingBox = BoundingBox.CreateFromPoints(points);
         }
 
-        public override Vector4 calculateAmbient(Vector4 ambientLight, Ray ray, float dist)
-        {
-            Vector3 intersection = ray.Position + (ray.Direction * dist);
-            return material1.calculateAmbient(ambientLight, getU(intersection), getV(intersection));
-        }
-
-        public override Vector4 calculateDiffuse(Vector3 intersection, Vector3 normal, Light l, Vector3 lightVector)
-        {
-            return material1.calculateDiffuse(intersection, normal, l, lightVector, getU(intersection), getV(intersection));
-        }
-
-        private float getU(Vector3 intersection)
+        protected override float getU(Vector3 intersection)
         {
             return (intersection.X - boundingBox.Min.X) / (boundingBox.Max.X - boundingBox.Min.X) * MaxU;
         }
 
-        private float getV(Vector3 intersection)
+        protected override float getV(Vector3 intersection)
         {
             return (intersection.Z - boundingBox.Min.Z) / (boundingBox.Max.Z - boundingBox.Min.Z) * MaxV;
         }
@@ -69,7 +44,7 @@ namespace RayTracer
             return null;
         }
 
-        public override Vector3 GetIntersectNormal(Ray ray, float dist)
+        public override Vector3 GetIntersectNormal(Vector3 intersectPoint)
         {
             return plane.Normal;
         }
