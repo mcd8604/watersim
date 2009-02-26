@@ -42,8 +42,8 @@ namespace VolumeRayCasting
 		float SpikyKern;
 		float LapKern;
 
-        Vector3 Min = new Vector3(-15f, -15f, -15f);
-        Vector3 Max = new Vector3(15f, 15f, 15f);
+        Vector3 Min = new Vector3(-30f, -30f, -30f);
+        Vector3 Max = new Vector3(30f, 30f, 30f);
 
         public Vector3 PositionMin
         {
@@ -54,8 +54,8 @@ namespace VolumeRayCasting
             get { return Max; }
         }
 
-		Vector3 InitMin = new Vector3(0f, -10f, 0f);
-        Vector3 InitMax = new Vector3(8f, 15f, 8f);
+		Vector3 InitMin = new Vector3(-10f, -25f, -10f);
+        Vector3 InitMax = new Vector3(10f, 25f, 10f);
 
 		//Vector3 Min = new Vector3(-25f, 0f, -25f);
 		//Vector3 Max = new Vector3(25f, 100f, 25f);
