@@ -386,15 +386,15 @@ namespace VolumeRayCasting
 
             Vector3 delta = (intersection - gridPoints[xIndex, yIndex, zIndex]) / (gridPoints[xIndex + 1, yIndex + 1, zIndex + 1] - gridPoints[xIndex, yIndex, zIndex]);
 
-            Vector3 n00 = Vector3.Lerp(gradient[xIndex, yIndex, zIndex], gradient[xIndex + 1, yIndex, zIndex + 1], delta.X);
+            Vector3 n00 = Vector3.Lerp(gradient[xIndex, yIndex, zIndex], gradient[xIndex + 1, yIndex, zIndex], delta.X);
             Vector3 n01 = Vector3.Lerp(gradient[xIndex, yIndex, zIndex + 1], gradient[xIndex + 1, yIndex, zIndex + 1], delta.X);
-            Vector3 n11 = Vector3.Lerp(gradient[xIndex, yIndex + 1, zIndex + 1], gradient[xIndex + 1, yIndex + 1, zIndex + 1], delta.X);
             Vector3 n10 = Vector3.Lerp(gradient[xIndex, yIndex + 1, zIndex], gradient[xIndex + 1, yIndex + 1, zIndex], delta.X);
+            Vector3 n11 = Vector3.Lerp(gradient[xIndex, yIndex + 1, zIndex + 1], gradient[xIndex + 1, yIndex + 1, zIndex + 1], delta.X);
 
             Vector3 n0 = Vector3.Lerp(n00, n10, delta.Y);
             Vector3 n1 = Vector3.Lerp(n01, n11, delta.Y);
 
-            return Vector3.Normalize(Vector3.Negate(Vector3.Lerp(n0, n1, delta.Z)));
+            return Vector3.Normalize(Vector3.Lerp(n0, n1, delta.Z));
         }
 
         //public override Vector4 GetLighting(Vector4 ambientLight, Ray ray, float dist, Light l, Vector3 viewVector)
