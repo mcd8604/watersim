@@ -1,4 +1,4 @@
-#undef WRITE_AVI
+#define WRITE_AVI
 
 using System;
 using System.Collections.Generic;
@@ -29,8 +29,8 @@ namespace VolumeRayCasting
         WaterBody waterBody;
         Volume volume;
 
-        readonly Vector3 cameraPos = new Vector3(150f, 150f, 150f);
-        readonly Vector3 cameraTarget = new Vector3(0f, 0f, 0f);
+        readonly Vector3 cameraPos = new Vector3(75f, 50f, 75f);
+        readonly Vector3 cameraTarget = new Vector3(0f, -25f, 0f);
 
         readonly Vector4 ambientLight = new Vector4(.2f, .2f, .2f, 1f);
 
@@ -42,6 +42,7 @@ namespace VolumeRayCasting
 #if DEBUG
         double fps;
         int frameCount;
+        int totalFrames = 0;
         const double SAMPLE_TIME_FRAME = 1f;
         double sampleTime;
         SpriteFont font;
@@ -62,7 +63,11 @@ namespace VolumeRayCasting
 
             this.Components.Add(rayTracer);
 #if WRITE_AVI
-            aviWriter = new AviWriter(this, "Render.avi");
+            int i = 0;
+            while (System.IO.File.Exists("Render_" + i + ".avi")) { ++i; }
+
+            aviWriter = new AviWriter(this, "Render_" + i + ".avi");
+
             this.Components.Add(aviWriter);
 #endif
         }
@@ -88,9 +93,10 @@ namespace VolumeRayCasting
             
             volume = new Volume(waterBody);
             Material mw = new Material();
-            mw.AmbientStrength = 1f;
-            mw.DiffuseStrength = 0.15f;
-            mw.SpecularStrength = 0.25f;
+            mw.AmbientStrength = 0f;
+            mw.DiffuseStrength = 1f;
+            mw.SpecularStrength = 0.75f;
+            mw.Transparency = 0.5f;
             mw.Exponent = 32;
             mw.setAmbientColor(Color.RoyalBlue.ToVector4());
             mw.setDiffuseColor(Color.SkyBlue.ToVector4());
@@ -98,6 +104,24 @@ namespace VolumeRayCasting
             volume.Material1 = mw;
 
             rayTracer.WorldObjects.Add(volume);
+
+            //RayTraceable floor = new Quad(new Vector3(8, 0, 16), new Vector3(-8, 0, -16), new Vector3(8, 0, -16), new Vector3(-8, 0, -16));
+            RayTraceable floor = new Quad(
+                new Vector3(waterBody.PositionMax.X, waterBody.PositionMin.Y, waterBody.PositionMax.Z), 
+                waterBody.PositionMin, 
+                new Vector3(waterBody.PositionMax.X, waterBody.PositionMin.Y, waterBody.PositionMin.Z),
+                waterBody.PositionMin
+                );
+            Material floorMat = new MaterialCheckered();
+            //Material floorMat = new MaterialCircleGradient(.5f, Color.White.ToVector4(), Color.Green.ToVector4());
+            //Material floorMat = new MaterialBitmap((System.Drawing.Bitmap)System.Drawing.Bitmap.FromFile(@"mtgcard.jpg"));
+            floorMat.AmbientStrength = 1f;
+            floorMat.DiffuseStrength = 1f;
+            floor.Material1 = floorMat;
+            floor.MaxU = 10;
+            floor.MaxV = 10;
+
+            rayTracer.WorldObjects.Add(floor);
         }
 
         private void InitializeLighting()
@@ -200,9 +224,18 @@ namespace VolumeRayCasting
 
 #if DEBUG
             ++frameCount;
+            ++totalFrames;
 #endif
 
             base.Draw(gameTime);
+
+#if WRITE_AVI
+            if (totalFrames > 300)
+            {
+                aviWriter.Close();
+                Exit();
+            }
+#endif
         }
         
     }
