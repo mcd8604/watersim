@@ -207,11 +207,8 @@ namespace VolumeRayCasting
                     for (int z = 0; z < GRID_DIMENSION; ++z)
                     {
                         //get average of all vectors from current point to each neighboring point 
-                        //(min 6, max 26)
 
                         Vector3 avg = Vector3.Zero;
-
-                        int numVectors = 0;
 
                         int minX = Math.Max(0, x - 1);
                         int minY = Math.Max(0, y - 1);
@@ -220,23 +217,22 @@ namespace VolumeRayCasting
                         int maxY = Math.Min(GRID_DIMENSION - 1, y + 1);
                         int maxZ = Math.Min(GRID_DIMENSION - 1, z + 1);
 
-                        for (int nx = minX; nx < maxX; ++nx)
+                        for (int nx = minX; nx <= maxX; ++nx)
                         {
-                            for (int ny = minY; ny < maxY; ++ny)
+                            for (int ny = minY; ny <= maxY; ++ny)
                             {
-                                for (int nz = minZ; nz < maxZ; ++nz)
+                                for (int nz = minZ; nz <= maxZ; ++nz)
                                 {
                                     if (x != nx || y != ny || z != nz)
                                     {
                                         avg += (gridPoints[x, y, z] - gridPoints[nx, ny, nz]) * (gridValues[x, y, z] - gridValues[nx, ny, nz]);
-                                        ++numVectors;
                                     }
                                 }
                             }
                         }
 
-                        if (numVectors != 0 && avg != Vector3.Zero)
-                            gradient[x, y, z] = avg / numVectors;
+                        if (avg != Vector3.Zero)
+                            gradient[x, y, z] = Vector3.Normalize(avg);
                     }
                 }
             }
@@ -272,7 +268,7 @@ namespace VolumeRayCasting
 
         public override float? Intersects(Ray ray)
         {
-            float? macroDist = ray.Intersects(boundingBox);
+            float? macroDist = rayIntersectsAABB(ref ray);
             if(macroDist == null)
                 return null;
 
@@ -364,6 +360,11 @@ namespace VolumeRayCasting
             return null;
         }
 
+        private float? rayIntersectsAABB(ref Ray ray)
+        {
+            return ray.Intersects(boundingBox);
+        }
+
         public override Vector3 GetIntersectNormal(Vector3 intersection)
         {
             // Get the grid index of the intersection point
@@ -394,7 +395,12 @@ namespace VolumeRayCasting
             Vector3 n0 = Vector3.Lerp(n00, n10, delta.Y);
             Vector3 n1 = Vector3.Lerp(n01, n11, delta.Y);
 
-            return Vector3.Normalize(Vector3.Lerp(n0, n1, delta.Z));
+            Vector3 n = Vector3.Lerp(n0, n1, delta.Z);
+
+            if (n == Vector3.Zero)
+                return n;
+
+            return Vector3.Normalize(n);
         }
 
         //public override Vector4 GetLighting(Vector4 ambientLight, Ray ray, float dist, Light l, Vector3 viewVector)

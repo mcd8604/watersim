@@ -1,4 +1,4 @@
-#define WRITE_AVI
+#undef WRITE_AVI
 
 using System;
 using System.Collections.Generic;
@@ -61,6 +61,8 @@ namespace VolumeRayCasting
             rayTracer.NearPlaneDistance = 0.1f;
             rayTracer.FarPlaneDistance = 1000f;
 
+            rayTracer.RecursionDepth = 2;
+
             this.Components.Add(rayTracer);
 #if WRITE_AVI
             int i = 0;
@@ -96,7 +98,7 @@ namespace VolumeRayCasting
             mw.AmbientStrength = 0f;
             mw.DiffuseStrength = 1f;
             mw.SpecularStrength = 0.75f;
-            mw.Transparency = 0.5f;
+            //mw.Transparency = 0.5f;
             mw.Exponent = 32;
             mw.setAmbientColor(Color.RoyalBlue.ToVector4());
             mw.setDiffuseColor(Color.SkyBlue.ToVector4());
