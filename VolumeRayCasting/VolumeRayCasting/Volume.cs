@@ -182,11 +182,11 @@ namespace VolumeRayCasting
                             //if(dist <= cutOff)
                             //value += w.density;// / distSq;
                             value += 1 / distSq;
-                            if (value > 1)
-                            {
-                                value = 1;
-                                break;
-                            }
+                            //if (value > 1)
+                            //{
+                            //    value = 1;
+                            //    break;
+                            //}
                         }
 
                         gridValues[x, y, z] = value;
@@ -346,7 +346,8 @@ namespace VolumeRayCasting
                 float deltaZMax = (deltaMax.Z / delta.Z);
 
                 // sampled density > 1
-                if ((deltaZMax * d0 + deltaZMin * d1) > 1)
+                // TODO: iso-value
+                if ((deltaZMax * d0 + deltaZMin * d1) > isoLevel)
                 {
                     return curDist;
                 }
