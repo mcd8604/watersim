@@ -3,12 +3,17 @@
 // Flag - continue shadow rays through transparent materials
 #undef TRANSMIT_SHADOW
 
+#define MULTITHREAD
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+#if MULTITHREAD
+using System.Threading;
+#endif
 
 namespace RayTracer
 {
@@ -27,6 +32,17 @@ namespace RayTracer
     /// </summary>
     public class RTManager : DrawableGameComponent
     {
+#if MULTITHREAD
+        private const int NUM_THREADS = 32;
+        private Thread[] threads;
+#endif
+
+#if DEBUG
+        private System.Diagnostics.Stopwatch stopWatch = new System.Diagnostics.Stopwatch();
+
+        public double DrawTime = 0;
+#endif
+
         /// <summary>
         /// Width of the projected scene.
         /// </summary>
@@ -182,10 +198,27 @@ namespace RayTracer
         public RTManager(Game game)
             : base(game) { }
 
+
+#if MULTITHREAD
+        public override void Initialize()
+        {
+            threads = new Thread[NUM_THREADS];
+
+            ParameterizedThreadStart deleg = new ParameterizedThreadStart(trace);
+
+            for (int i = 0; i < NUM_THREADS; ++i)
+                threads[i] = new Thread(deleg);
+
+            base.Initialize();
+        }
+#endif
+
         protected override void LoadContent()
         {
             width = GraphicsDevice.PresentationParameters.BackBufferWidth;
             height = GraphicsDevice.PresentationParameters.BackBufferHeight;
+            colorData = new Vector4[width * height];
+            colors = new Color[colorData.Length];
 
             spriteBatch = new SpriteBatch(GraphicsDevice);
 
@@ -231,6 +264,10 @@ namespace RayTracer
                 }
             }
         }
+        
+#if MULTITHREAD
+        private int activeThreads;
+#endif 
 
         /// <summary>
         /// Performs ray tracing, rasterizes and draws a projection texture.
@@ -238,7 +275,37 @@ namespace RayTracer
         /// <param name="gameTime"></param>
         public override void Draw(GameTime gameTime)
         {
+#if DEBUG
+            stopWatch.Start();
+#endif
+
+#if MULTITHREAD
+            for (int i = 0; i < NUM_THREADS; ++i)
+            {
+                if (threads[i].ThreadState == ThreadState.Unstarted)
+                {
+                    threads[i].Start(i);
+                }
+            }
+
+            lock(colorData)
+                Monitor.PulseAll(colorData);
+
+            while (activeThreads > 0) { }
+#else
             trace();
+#endif
+
+#if DEBUG
+            stopWatch.Stop();
+            DrawTime = stopWatch.Elapsed.TotalSeconds;
+            stopWatch.Reset();
+#endif
+
+            if (trOp != TROp.None)
+                applyToneReproduction(colorData);
+
+            createTexture();
 
             spriteBatch.Begin();
             spriteBatch.Draw(projection, Vector2.Zero, Color.White);
@@ -246,14 +313,52 @@ namespace RayTracer
 
             base.Draw(gameTime);
         }
+        
+        private Color[] colors;
 
+        private void createTexture()
+        {            
+            int i = 0;
+            foreach (Vector4 v in colorData)
+                colors[i++] = new Color(v);
+            projection = new Texture2D(GraphicsDevice, width, height);
+            projection.SetData<Color>(colors);
+        }
+
+        private Vector4[] colorData;
+        
+#if MULTITHREAD
         /// <summary>
-        /// Traces each ray into the world, applies tone reproduction, then creates a projection texture.
+        /// Traces each ray into the world
+        /// </summary>
+        private void trace(object startRowIndex)
+        {
+            lock (colorData)
+            {
+                while (true)
+                {
+                    for (int y = (int)startRowIndex; y < height; y += NUM_THREADS)
+                    {
+                        for (int x = 0; x < width; ++x)
+                        {
+                            Ray ray = rayTable[x, y];
+                            colorData[(y * width) + x] = Illuminate(ray, 0);
+                        }
+                    }
+
+                    --activeThreads;
+
+                    Monitor.Wait(colorData);
+                }
+            }
+        }
+#else
+        /// <summary>
+        /// Traces each ray into the world
         /// </summary>
         private void trace()
         {
-            Vector4[] colorData = new Vector4[width * height];
-
+            Vector4 color;
             for (int y = 0; y < height; ++y)
             {
                 for (int x = 0; x < width; ++x)
@@ -261,20 +366,13 @@ namespace RayTracer
                     Ray ray = rayTable[x, y];
                     int pixelIndex = (y * width) + x;
 
-                    colorData[pixelIndex] = Illuminate(ray, 0);
+                    color = Illuminate(ray, 0);
+
+                    colorData[pixelIndex] = color;
                 }
             }
-
-            if(trOp != TROp.None) 
-                applyToneReproduction(colorData);
-
-            Color[] colors = new Color[colorData.Length];
-            int i = 0;
-            foreach (Vector4 v in colorData)
-                colors[i++] = new Color(v);
-            projection = new Texture2D(GraphicsDevice, width, height);
-            projection.SetData<Color>(colors);
         }
+#endif
 
         private void applyToneReproduction(Vector4[] colorData)
         {
@@ -412,6 +510,8 @@ namespace RayTracer
                         spawnTransmissionRay(depth, ref intersectPoint, rt, ref intersectNormal, ref totalLight, ref incidentVector);
                     }
                 }
+                if (!(rt is Quad) && totalLight.Length() > 0)
+                { }
 
                 return totalLight;
             }
