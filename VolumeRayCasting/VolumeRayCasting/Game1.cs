@@ -159,12 +159,8 @@ namespace VolumeRayCasting
         
 #if DEBUG
         double waterTime;
-        double rayTime;
         Stopwatch sw = new Stopwatch();
 #endif
-
-        MouseState lastState = Mouse.GetState();
-        MouseState curState;
 
         /// <summary>
         /// Allows the game to run logic such as updating the world,
@@ -176,10 +172,6 @@ namespace VolumeRayCasting
             // Allows the game to exit
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed)
                 this.Exit();
-
-            // TODO: Add your update logic here
-
-            lastState = curState;
 
             KeyboardState keyboard = Keyboard.GetState();
 
@@ -230,6 +222,12 @@ namespace VolumeRayCasting
 #endif
 
             base.Draw(gameTime);
+
+#if DEBUG
+            spriteBatch.Begin();
+            spriteBatch.DrawString(font, "Raytracer Time: " + rayTracer.DrawTime, Vector2.Zero, Color.White);
+            spriteBatch.End();
+#endif
 
 #if WRITE_AVI
             if (totalFrames > 300)
