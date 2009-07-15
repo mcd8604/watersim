@@ -6,7 +6,7 @@ using Microsoft.Xna.Framework.Graphics;
 using System.Diagnostics;
 using RayTracer;
 
-namespace VolumeRayCasting
+namespace VolumeRayCastingCPU
 {
     class Volume : RayTraceable
     {
