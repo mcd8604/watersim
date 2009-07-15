@@ -5,6 +5,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System.Diagnostics;
 using RayTracer;
+using WaterLib;
 
 namespace VolumeRayCastingCPU
 {
