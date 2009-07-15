@@ -15,6 +15,7 @@ using Microsoft.Xna.Framework.Storage;
 using System.Diagnostics;
 using RayTracer;
 using AviAccess;
+using WaterLib;
 
 namespace VolumeRayCastingCPU
 {
