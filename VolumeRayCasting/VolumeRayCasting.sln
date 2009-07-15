@@ -9,7 +9,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WaterLib", "WaterLib\WaterL
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VolumeRayCastingShader", "VolumeRayCastingShader\VolumeRayCastingShader.csproj", "{D0DA2016-400C-42E3-A941-33A164071B63}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VolumeRayCastingCPU", "VolumeRayCastingCPU\VolumeRayCastingCPU.csproj", "{EC392A76-6FB2-4AA9-B401-9B7528CDE589}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VolumeRayCastingCPU", "VolumeRayCastingCPU\VolumeRayCastingCPU.csproj", "{EC392A76-6FB2-4AA9-B401-9B7528CDE589}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -33,6 +33,10 @@ Global
 		{D0DA2016-400C-42E3-A941-33A164071B63}.Debug|x86.Build.0 = Debug|x86
 		{D0DA2016-400C-42E3-A941-33A164071B63}.Release|x86.ActiveCfg = Release|x86
 		{D0DA2016-400C-42E3-A941-33A164071B63}.Release|x86.Build.0 = Release|x86
+		{EC392A76-6FB2-4AA9-B401-9B7528CDE589}.Debug|x86.ActiveCfg = Debug|x86
+		{EC392A76-6FB2-4AA9-B401-9B7528CDE589}.Debug|x86.Build.0 = Debug|x86
+		{EC392A76-6FB2-4AA9-B401-9B7528CDE589}.Release|x86.ActiveCfg = Release|x86
+		{EC392A76-6FB2-4AA9-B401-9B7528CDE589}.Release|x86.Build.0 = Release|x86
 		{768FF59E-01EF-47A8-9BD8-2923FC01F88D}.Debug|x86.ActiveCfg = Debug|x86
 		{768FF59E-01EF-47A8-9BD8-2923FC01F88D}.Release|x86.ActiveCfg = Release|x86
 		{310833EE-A08C-4581-991D-9F288F21F48C}.Debug|x86.ActiveCfg = Debug|x86
@@ -41,10 +45,6 @@ Global
 		{E4BC1F5E-E466-4C7D-A8B6-52300B05D786}.Release|x86.ActiveCfg = Release|x86
 		{97C14604-AF0A-4781-81C9-3D0FC02E9656}.Debug|x86.ActiveCfg = Debug|x86
 		{97C14604-AF0A-4781-81C9-3D0FC02E9656}.Release|x86.ActiveCfg = Release|x86
-		{EC392A76-6FB2-4AA9-B401-9B7528CDE589}.Debug|x86.ActiveCfg = Debug|x86
-		{EC392A76-6FB2-4AA9-B401-9B7528CDE589}.Debug|x86.Build.0 = Debug|x86
-		{EC392A76-6FB2-4AA9-B401-9B7528CDE589}.Release|x86.ActiveCfg = Release|x86
-		{EC392A76-6FB2-4AA9-B401-9B7528CDE589}.Release|x86.Build.0 = Release|x86
 		{FAD94C02-5B5E-4C22-BC90-F38EDC4AF301}.Debug|x86.ActiveCfg = Debug|x86
 		{FAD94C02-5B5E-4C22-BC90-F38EDC4AF301}.Release|x86.ActiveCfg = Release|x86
 	EndGlobalSection

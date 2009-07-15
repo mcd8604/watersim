@@ -16,7 +16,7 @@ using System.Diagnostics;
 using RayTracer;
 using AviAccess;
 
-namespace VolumeRayCasting
+namespace VolumeRayCastingCPU
 {
     /// <summary>
     /// This is the main type for your game

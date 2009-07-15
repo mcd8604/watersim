@@ -1,6 +1,6 @@
 using System;
 
-namespace VolumeRayCasting
+namespace VolumeRayCastingCPU
 {
     static class Program
     {
