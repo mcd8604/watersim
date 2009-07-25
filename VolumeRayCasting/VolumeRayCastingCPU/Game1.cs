@@ -27,8 +27,7 @@ namespace VolumeRayCastingCPU
         GraphicsDeviceManager graphics;
         SpriteBatch spriteBatch;
 
-        WaterBody waterBody;
-        Volume volume;
+        VolumeRayTraceable volume;
 
         readonly Vector3 cameraPos = new Vector3(75f, 50f, 75f);
         readonly Vector3 cameraTarget = new Vector3(0f, -25f, 0f);
@@ -91,10 +90,8 @@ namespace VolumeRayCastingCPU
         }
 
         private void InitializeWorld()
-        {
-            waterBody = new WaterBody();
-            
-            volume = new Volume(waterBody);
+        {            
+            volume = new VolumeRayTraceable();
             Material mw = new Material();
             mw.AmbientStrength = 0f;
             mw.DiffuseStrength = 1f;
@@ -110,10 +107,10 @@ namespace VolumeRayCastingCPU
 
             //RayTraceable floor = new Quad(new Vector3(8, 0, 16), new Vector3(-8, 0, -16), new Vector3(8, 0, -16), new Vector3(-8, 0, -16));
             RayTraceable floor = new Quad(
-                new Vector3(waterBody.PositionMax.X, waterBody.PositionMin.Y, waterBody.PositionMax.Z), 
-                waterBody.PositionMin, 
-                new Vector3(waterBody.PositionMax.X, waterBody.PositionMin.Y, waterBody.PositionMin.Z),
-                waterBody.PositionMin
+                new Vector3(volume.PositionMax.X, volume.PositionMin.Y, volume.PositionMax.Z),
+                volume.PositionMin,
+                new Vector3(volume.PositionMax.X, volume.PositionMin.Y, volume.PositionMin.Z),
+                volume.PositionMin
                 );
             Material floorMat = new MaterialCheckered();
             //Material floorMat = new MaterialCircleGradient(.5f, Color.White.ToVector4(), Color.Green.ToVector4());
@@ -157,11 +154,6 @@ namespace VolumeRayCastingCPU
         {
             // TODO: Unload any non ContentManager content here
         }
-        
-#if DEBUG
-        double waterTime;
-        Stopwatch sw = new Stopwatch();
-#endif
 
         /// <summary>
         /// Allows the game to run logic such as updating the world,
@@ -210,18 +202,12 @@ namespace VolumeRayCastingCPU
             GraphicsDevice.Clear(Color.Black);
 
             // TODO: Add your drawing code here
-            sw.Reset();
-            sw.Start();
-            waterBody.Update();
-            sw.Stop();
-            waterTime = sw.Elapsed.TotalSeconds;
             volume.Update();
 
 #if DEBUG
             ++frameCount;
             ++totalFrames;
 #endif
-
             base.Draw(gameTime);
 
 #if DEBUG

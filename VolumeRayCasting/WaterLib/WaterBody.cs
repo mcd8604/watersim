@@ -7,7 +7,7 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace WaterLib
 {
-	public class WaterBody
+	internal class WaterBody
 	{
 		Random Rand = new Random();
 
@@ -16,7 +16,7 @@ namespace WaterLib
 
 		float SimScale = 0.004f;
 
-        public float Scale
+        internal float Scale
         {
             get { return SimScale; }
         }
@@ -32,7 +32,7 @@ namespace WaterLib
 		float ExteriorDampening = 256f;
 		float SpeedLimit = 200f;
 
-        public float Radius
+        internal float Radius
         {
             get { return SmoothRadius; }
         }
@@ -45,11 +45,11 @@ namespace WaterLib
         Vector3 Min = new Vector3(-30f, -30f, -30f);
         Vector3 Max = new Vector3(30f, 30f, 30f);
 
-        public Vector3 PositionMin
+        internal Vector3 PositionMin
         {
             get { return Min; }
         }
-        public Vector3 PositionMax
+        internal Vector3 PositionMax
         {
             get { return Max; }
         }
@@ -64,20 +64,21 @@ namespace WaterLib
 		//Vector3 InitMax = new Vector3(-5f, 30f, 5f);
 
 
-        public Water[] water;
+        internal Water[] water;
 
-        public List<Water>[, ,] watergrid;
+        internal List<Water>[, ,] watergrid;
 
 		Vector3 GridMin;
 		Vector3 GridMax;
 		Vector3 GridSize;
         Vector3 GridResolution = Vector3.Zero;
 
-		public bool UseGrid = true;
+		internal bool UseGrid = true;
 
-		public Stopwatch timer;
+		internal Stopwatch timer;
+        internal double UpdateTime;
 
-		public WaterBody()
+		internal WaterBody()
 		{
 			CalcKernels();
 			Spawn();
@@ -177,7 +178,7 @@ namespace WaterLib
 			}
 		}
 
-		public void Update()
+		internal void Update()
 		{
 			timer.Start();
 
@@ -198,7 +199,8 @@ namespace WaterLib
 
 
 			timer.Stop();
-			Console.WriteLine( "Update: " + timer.Elapsed.TotalSeconds);
+            UpdateTime = timer.Elapsed.TotalSeconds;
+            //Console.WriteLine( "Update: " + timer.Elapsed.TotalSeconds);
 			timer.Reset();
 		}
 
