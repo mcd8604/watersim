@@ -144,8 +144,6 @@ namespace VolumeRayCastingShader
 
             effect.Parameters["ScreenResolution"].SetValue(new Vector2(GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height));
 
-            effect.Parameters["CameraPosition"].SetValue(cameraPos);
-
             effect.Parameters["MinBound"].SetValue(volume.VolumeBB.Min);
             effect.Parameters["MaxBound"].SetValue(volume.VolumeBB.Max);
 
