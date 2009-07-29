@@ -97,7 +97,7 @@ namespace VolumeRayCastingCPU
                 float d001 = volume.GridValues[xIndex, yIndex, zIndex + 1];
                 float d010 = volume.GridValues[xIndex, yIndex + 1, zIndex];
                 float d011 = volume.GridValues[xIndex, yIndex + 1, zIndex + 1];
-                float d100 = volume.GridValues[xIndex + 1, yIndex, zIndex + 1];
+                float d100 = volume.GridValues[xIndex + 1, yIndex, zIndex];
                 float d101 = volume.GridValues[xIndex + 1, yIndex, zIndex + 1];
                 float d110 = volume.GridValues[xIndex + 1, yIndex + 1, zIndex];
                 float d111 = volume.GridValues[xIndex + 1, yIndex + 1, zIndex + 1];
