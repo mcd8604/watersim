@@ -1,0 +1,54 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual Studio 2008
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RayTracer", "RayTracer\RayTracer.csproj", "{236E93C0-C875-43C3-9ACA-32FBFC957BF4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AviAccess", "..\WaterPolygonizerDemo\AviAccess\AviAccess.csproj", "{A06205FC-A4DF-42CE-B163-E55DD6E24A4D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WaterLib", "WaterLib\WaterLib.csproj", "{B24C3717-C7AC-4B40-9AEF-1F041EAAE46A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VolumeRayCastingShader", "VolumeRayCastingShader\VolumeRayCastingShader.csproj", "{D0DA2016-400C-42E3-A941-33A164071B63}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VolumeRayCastingCPU", "VolumeRayCastingCPU\VolumeRayCastingCPU.csproj", "{EC392A76-6FB2-4AA9-B401-9B7528CDE589}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x86 = Debug|x86
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{236E93C0-C875-43C3-9ACA-32FBFC957BF4}.Debug|x86.ActiveCfg = Debug|x86
+		{236E93C0-C875-43C3-9ACA-32FBFC957BF4}.Debug|x86.Build.0 = Debug|x86
+		{236E93C0-C875-43C3-9ACA-32FBFC957BF4}.Release|x86.ActiveCfg = Release|x86
+		{236E93C0-C875-43C3-9ACA-32FBFC957BF4}.Release|x86.Build.0 = Release|x86
+		{A06205FC-A4DF-42CE-B163-E55DD6E24A4D}.Debug|x86.ActiveCfg = Debug|x86
+		{A06205FC-A4DF-42CE-B163-E55DD6E24A4D}.Debug|x86.Build.0 = Debug|x86
+		{A06205FC-A4DF-42CE-B163-E55DD6E24A4D}.Release|x86.ActiveCfg = Release|x86
+		{A06205FC-A4DF-42CE-B163-E55DD6E24A4D}.Release|x86.Build.0 = Release|x86
+		{B24C3717-C7AC-4B40-9AEF-1F041EAAE46A}.Debug|x86.ActiveCfg = Debug|x86
+		{B24C3717-C7AC-4B40-9AEF-1F041EAAE46A}.Debug|x86.Build.0 = Debug|x86
+		{B24C3717-C7AC-4B40-9AEF-1F041EAAE46A}.Release|x86.ActiveCfg = Release|x86
+		{B24C3717-C7AC-4B40-9AEF-1F041EAAE46A}.Release|x86.Build.0 = Release|x86
+		{D0DA2016-400C-42E3-A941-33A164071B63}.Debug|x86.ActiveCfg = Debug|x86
+		{D0DA2016-400C-42E3-A941-33A164071B63}.Debug|x86.Build.0 = Debug|x86
+		{D0DA2016-400C-42E3-A941-33A164071B63}.Release|x86.ActiveCfg = Release|x86
+		{D0DA2016-400C-42E3-A941-33A164071B63}.Release|x86.Build.0 = Release|x86
+		{768FF59E-01EF-47A8-9BD8-2923FC01F88D}.Debug|x86.ActiveCfg = Debug|x86
+		{768FF59E-01EF-47A8-9BD8-2923FC01F88D}.Release|x86.ActiveCfg = Release|x86
+		{310833EE-A08C-4581-991D-9F288F21F48C}.Debug|x86.ActiveCfg = Debug|x86
+		{310833EE-A08C-4581-991D-9F288F21F48C}.Release|x86.ActiveCfg = Release|x86
+		{E4BC1F5E-E466-4C7D-A8B6-52300B05D786}.Debug|x86.ActiveCfg = Debug|x86
+		{E4BC1F5E-E466-4C7D-A8B6-52300B05D786}.Release|x86.ActiveCfg = Release|x86
+		{97C14604-AF0A-4781-81C9-3D0FC02E9656}.Debug|x86.ActiveCfg = Debug|x86
+		{97C14604-AF0A-4781-81C9-3D0FC02E9656}.Release|x86.ActiveCfg = Release|x86
+		{EC392A76-6FB2-4AA9-B401-9B7528CDE589}.Debug|x86.ActiveCfg = Debug|x86
+		{EC392A76-6FB2-4AA9-B401-9B7528CDE589}.Debug|x86.Build.0 = Debug|x86
+		{EC392A76-6FB2-4AA9-B401-9B7528CDE589}.Release|x86.ActiveCfg = Release|x86
+		{EC392A76-6FB2-4AA9-B401-9B7528CDE589}.Release|x86.Build.0 = Release|x86
+		{FAD94C02-5B5E-4C22-BC90-F38EDC4AF301}.Debug|x86.ActiveCfg = Debug|x86
+		{FAD94C02-5B5E-4C22-BC90-F38EDC4AF301}.Release|x86.ActiveCfg = Release|x86
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
