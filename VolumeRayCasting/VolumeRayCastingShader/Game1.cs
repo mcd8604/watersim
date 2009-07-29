@@ -142,45 +142,16 @@ namespace VolumeRayCastingShader
             effect.Parameters["InvView"].SetValue(Matrix.Invert(view));
             effect.Parameters["InvProjection"].SetValue(Matrix.Invert(projection));
 
-            effect.Parameters["Resolution"].SetValue(new Vector2(GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height));
+            effect.Parameters["ScreenResolution"].SetValue(new Vector2(GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height));
 
             effect.Parameters["CameraPosition"].SetValue(cameraPos);
 
             effect.Parameters["MinBound"].SetValue(volume.VolumeBB.Min);
             effect.Parameters["MaxBound"].SetValue(volume.VolumeBB.Max);
 
-
-            // Set main Axis Aligned Bounding Box
-
-            //Vector3 x1N, x2N, y1N, y2N, z1N, z2N;
-            //x1N = Vector3.UnitX;
-            //x2N = -Vector3.UnitX;
-            //y1N = Vector3.UnitY;
-            //y2N = -Vector3.UnitY;
-            //z1N = Vector3.UnitZ;
-            //z2N = -Vector3.UnitZ;
-
-            //effect.Parameters["box0"].StructureMembers["x1"].StructureMembers["Normal"].SetValue(x1N);
-            //effect.Parameters["box0"].StructureMembers["x2"].StructureMembers["Normal"].SetValue(x2N);
-            //effect.Parameters["box0"].StructureMembers["y1"].StructureMembers["Normal"].SetValue(y1N);
-            //effect.Parameters["box0"].StructureMembers["y2"].StructureMembers["Normal"].SetValue(y2N);
-            //effect.Parameters["box0"].StructureMembers["z1"].StructureMembers["Normal"].SetValue(z1N);
-            //effect.Parameters["box0"].StructureMembers["z2"].StructureMembers["Normal"].SetValue(z2N);
-
-            float[] distances = {
-                volume.VolumeBB.Min.X,
-                volume.VolumeBB.Max.X,
-                volume.VolumeBB.Min.Y,
-                volume.VolumeBB.Max.Y,
-                volume.VolumeBB.Min.Z,
-                volume.VolumeBB.Max.Z
-            };
-            effect.Parameters["AABBDistances"].SetValue(distances);
-
-            //effect.Parameters["BoundMin"].SetValue(volume.VolumeBB.Min);
-            //effect.Parameters["BoundMax"].SetValue(volume.VolumeBB.Max);
-
-
+            effect.Parameters["CastingStepSize"].SetValue(volume.GridCellSize.X); // Temporary
+            effect.Parameters["IsoValue"].SetValue(volume.IsoLevel);
+            effect.Parameters["GridCellSize"].SetValue(volume.GridCellSize);
         }
 
         private void UpdateTexture()
@@ -197,11 +168,14 @@ namespace VolumeRayCastingShader
                 {
                     for (int z = 0; z < Volume.GRID_DIMENSION; ++z)
                     {
-                        data[count++] = new Vector4(volume.Gradient[x, y, z], 0);
+                        data[count++] = new Vector4(volume.Gradient[x, y, z], volume.GridValues[x, y, z]);
                     }
                 }
             }
             tex.SetData<Vector4>(data);
+
+            if (effect != null)
+                effect.Parameters["VolumeData"].SetValue(tex);
         }
 
         /// <summary>

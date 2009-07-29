@@ -1,6 +1,8 @@
 #define POS_INF 2147483648;
 #define NEG_INF -2147483647;
 
+// Render parameters
+
 float4x4 World;
 float4x4 View;
 float4x4 Projection;
@@ -9,41 +11,32 @@ float4x4 InvWorld;
 float4x4 InvView;
 float4x4 InvProjection;
 
-float2 Resolution;
-
+float2 ScreenResolution;
 float3 CameraPosition;
 
-// AABB data in order of { xMin, xMax, yMin, yMax, zMin, zMax }
+// Volume parameters
 
-static float3 AABBNormals[6] =
+float CastingStepSize;
+float IsoValue;
+float3 MinBound, MaxBound;
+float3 GridCellSize;
+
+// Volume data
+
+texture VolumeData;
+sampler3D VolumeSampler =
+sampler_state
 {
-	{ -1, 0, 0 },
-	{ 1, 0, 0 },
-	{ 0, -1, 0 },
-	{ 0, 1, 0 },
-	{ 0, 0, -1 },
-	{ 0, 0, 1 }
+	Texture = <VolumeData>;
 };
 
-float AABBDistances[6];
-
-float3 MinBound, MaxBound;
+// Structures
 
 struct Ray
 {
 	float3 Origin;
 	float3 Direction;
 };
-
-// Volume data
-
-texture tex0;
-sampler3D s_3D;
-
-float4 getValue(float3 tex : TEXCOORD)
-{
-    return tex3D(s_3D, tex);
-}
 
 struct VertexShaderInput
 {
@@ -90,8 +83,8 @@ Ray GetRay(float2 screenCoords : VPOS)
 	
 	float4 a = 
 	{ 
-		(2 * screenCoords.x / Resolution.x) - 1, 
-		1 - (2 * screenCoords.y / Resolution.y), 
+		(2 * screenCoords.x / ScreenResolution.x) - 1, 
+		1 - (2 * screenCoords.y / ScreenResolution.y), 
 		0, 
 		1 
 	};
@@ -123,155 +116,207 @@ float RayPlaneIntersection(Ray ray, float planeOrigDist, float3 planeNormal)
 	// t = -( N.O + d ) / ( N.D )	
 	return -( dot( planeNormal, ray.Origin) + planeOrigDist ) / dot( planeNormal, ray.Direction );
 }
-
-bool hitbox(Ray r, float3 m1, float3 m2, out float tmin, out float tmax) 
- {
-   float tymin, tymax, tzmin, tzmax; 
-   float flag = 1.0; 
- 
-    if (r.Direction.x >= 0) 
-    {
-       tmin = (m1.x - r.Origin.x) / r.Direction.x;
-         tmax = (m2.x - r.Origin.x) / r.Direction.x;
-    }
-    else 
-    {
-       tmin = (m2.x - r.Origin.x) / r.Direction.x;
-       tmax = (m1.x - r.Origin.x) / r.Direction.x;
-    }
-    if (r.Direction.y >= 0) 
-    {
-       tymin = (m1.y - r.Origin.y) / r.Direction.y; 
-       tymax = (m2.y - r.Origin.y) / r.Direction.y; 
-    }
-    else 
-    {
-       tymin = (m2.y - r.Origin.y) / r.Direction.y; 
-       tymax = (m1.y - r.Origin.y) / r.Direction.y; 
-    }
-     
-    if ((tmin > tymax) || (tymin > tmax)) flag = -1.0; 
-    if (tymin > tmin) tmin = tymin; 
-    if (tymax < tmax) tmax = tymax; 
-      
-    if (r.Direction.z >= 0) 
-    {
-       tzmin = (m1.z - r.Origin.z) / r.Direction.z; 
-       tzmax = (m2.z - r.Origin.z) / r.Direction.z; 
-    }
-    else 
-    {
-       tzmin = (m2.z - r.Origin.z) / r.Direction.z; 
-       tzmax = (m1.z - r.Origin.z) / r.Direction.z; 
-    }
-    if ((tmin > tzmax) || (tzmin > tmax)) flag = -1.0; 
-    if (tzmin > tmin) tmin = tzmin; 
-    if (tzmax < tmax) tmax = tzmax; 
-      
-    return (flag > 0); 
- }
-
-//http://www.siggraph.org/education/materials/HyperGraph/raytrace/rtinter3.htm
-bool RayAABBIntersection(Ray ray, float originDist[6], out float dist)
-{
+	
+// Returns true if a ray intersects with the parallel pairs of planes of a bounding box.
+// tNear - distance along the ray of the near intersection.
+// tFar - distance along the ray of the far intersection.
+bool RayAABBIntersection(Ray ray, float3 min, float3 max, out float tNear, out float tFar)
+{		
 	bool intersects = true;
-		
-	float tNear = NEG_INF;
-	float tFar = POS_INF;
+
+	tNear = NEG_INF;
+	tFar = POS_INF;		
 	
-	// For each pair of planes associated with X, Y, and Z do:
+	// http://www.siggraph.org/education/materials/HyperGraph/raytrace/rtinter3.htm
+	// if ray is parallel to the axis, then	
+	// if ray is not between the pair of planes, it does not intersect
+	// else, compute the intersection distance of the planes	
+	// If T1 > T2, swap (T1, T2) /* since T1 intersection with near plane */
+	// If T1 > Tnear, set Tnear =T1 /* want largest Tnear */	
+	// If T2 < Tfar, set Tfar="T2" /* want smallest Tfar */	
+	// If Tnear > Tfar, box is missed so return false	
+	// If Tfar < 0, box is behind ray return false		
 	
-	for(int i = 0, k = 0; i < 3; ++i, k = i * 2)
-	{
-		// if ray is parallel to the pair of planes
-		
-		if(ray.Direction[i] == 0)
-		{
-			// if ray is not between the pair of planes, it does not intersect
-			
-			if(ray.Origin[i] < originDist[k] || ray.Origin[i] > originDist[k])
-			{
-				//break;
-				intersects = false;
-			}
-		} 
-		else 
-		{
-			// compute the intersection distance of the planes
-			
-			// T1 = (Xl - Xo) / Xd
-			// T2 = (Xh - Xo) / Xd
-			
-			float t1 = (originDist[k] - ray.Origin[i]) / ray.Direction[i];
-			float t2 = (originDist[k + 1] - ray.Origin[i]) / ray.Direction[i];
-						
-			//float t1 = RayPlaneIntersection(ray, originDist[k], AABBNormals[k]);
-			//float t2 = RayPlaneIntersection(ray, originDist[k + 1], AABBNormals[k + 1]);
-			
-			// If T1 > T2 swap (T1, T2) /* since T1 intersection with near plane */
-			
-			if(t1 > t2) 
-			{
-				float swap = t1;
-				t1 = t2;
-				t2 = swap;
-			}
-			
-			// If T1 > Tnear set Tnear =T1 /* want largest Tnear */
-			
-			if(t1 > tNear) 
-			{
-				tNear = t1;
-			}
-			
-			// If T2 < Tfar set Tfar="T2" /* want smallest Tfar */
-			
-			if(t2 < tFar)
-			{
-				tFar = t2;
-			}
-			
-			// If Tnear > Tfar box is missed so return false
-			
-			if(tNear > tFar) 
-			{
-				//return false;
-				intersects = false;
-			}
-			
-			// If Tfar < 0 box is behind ray return false end
-			
-			if(tFar < 0)
-			{
-				//return false;
-				intersects = false;
-			}
+	// X Axis
+	
+	if(ray.Direction.x == 0) {
+		if(ray.Origin.x < min.x || ray.Origin.x > max.x) intersects = false;
+	} else {		
+		float tx1 = (min.x - ray.Origin.x) / ray.Direction.x;
+		float tx2 = (max.x - ray.Origin.x) / ray.Direction.x;
+		if(tx1 > tx2) {
+			float swap = tx1;
+			tx1 = tx2;
+			tx2 = swap;
+		}			
+		if(tx1 > tNear) tNear = tx1;				
+		if(tx2 < tFar) tFar = tx2;				
+		if(tNear > tFar) intersects = false;				
+		if(tFar < 0) intersects = false;
+	}	
+	
+	// Y Axis
+	
+	if(intersects) {
+		if(ray.Direction.y == 0) {
+			if(ray.Origin.y < min.y || ray.Origin.y > max.y) intersects = false;
+		} else {		
+			float ty1 = (min.y - ray.Origin.y) / ray.Direction.y;
+			float ty2 = (max.y - ray.Origin.y) / ray.Direction.y;
+			if(ty1 > ty2) {
+				float swap = ty1;
+				ty1 = ty2;
+				ty2 = swap;
+			}							
+			if(ty1 > tNear) tNear = ty1;				
+			if(ty2 < tFar) tFar = ty2;				
+			if(tNear > tFar) intersects = false;				
+			if(tFar < 0) intersects = false;
 		}
 	}
 	
-	if(!intersects)
-	{
-		dist = NEG_INF;
-	}
-	else 
-	{
-		dist = tNear;
+	// Z Axis
+	
+	if(intersects) {
+		if(ray.Direction.z == 0) {
+			if(ray.Origin.z < min.z || ray.Origin.z > max.z) intersects = false;
+		} else {		
+			float tz1 = (min.z - ray.Origin.z) / ray.Direction.z;
+			float tz2 = (max.z - ray.Origin.z) / ray.Direction.z;	
+			if(tz1 > tz2) {
+				float swap = tz1;
+				tz1 = tz2;
+				tz2 = swap;
+			}					
+			if(tz1 > tNear) tNear = tz1;				
+			if(tz2 < tFar) tFar = tz2;				
+			if(tNear > tFar) intersects = false;				
+			if(tFar < 0) intersects = false;
+		}
 	}
 		
 	return intersects;
 }
 
-float GetClosestIntersection(Ray ray)
-{
-	float dist, maxDist;
+// Returns true if a valid value of the volume is intersected by the Ray.
+bool VolumeIntersection(Ray ray, out float4 intersectData)
+{    
+    float nearDist = 0, farDist = 0;  	
+	bool intersected = false;
+
+	// Check the bounding box first	
 	
-	//if(RayAABBIntersection(ray, AABBDistances, dist))
-	if(hitbox(ray, MinBound, MaxBound, dist, maxDist))
-	{
-		// TODO: child AABB intersection
+	if(RayAABBIntersection(ray, MinBound, MaxBound, nearDist, farDist))
+	{	
+		// Process volume - step along the ray until either 
+		// a value is found or farDist is reached.	
+		
+		float curDist = nearDist;
+		float3 curPt;
+		float3 index;
+        int xIndex = 0;
+        int yIndex = 0;
+        int zIndex = 0;	
+		
+		while(curDist < farDist) 
+		{
+			if(!intersected) 
+			{
+				curPt = ray.Origin + (ray.Direction * curDist);
+				
+				index.x = floor(((curPt.x - MinBound.x) / GridCellSize.x));
+				index.y = floor(((curPt.y - MinBound.y) / GridCellSize.y));
+				index.z = floor(((curPt.z - MinBound.z) / GridCellSize.z));
+	            
+				float3 index000 = { xIndex, yIndex, zIndex };
+				float3 index001 = { xIndex, yIndex, zIndex + 1 };
+				float3 index010 = { xIndex, yIndex + 1, zIndex };
+				float3 index011 = { xIndex, yIndex + 1, zIndex + 1 };
+				float3 index100 = { xIndex + 1, yIndex, zIndex };
+				float3 index101 = { xIndex + 1, yIndex, zIndex + 1 };
+				float3 index110 = { xIndex + 1, yIndex + 1, zIndex };
+				float3 index111 = { xIndex + 1, yIndex + 1, zIndex + 1 };
+	                                    
+				// trilinear interpolation
+	            
+				//float3 c000 = volume.GridPoints[xIndex, yIndex, zIndex];
+				//float3 c111 = volume.GridPoints[xIndex + 1, yIndex + 1, zIndex + 1];
+				float3 c000 = MinBound + (GridCellSize * index000);
+				float3 c111 = c000 + GridCellSize;
+				//float3 delta = c111 - c000;
+				//float3 deltaMin = curPt - c000;
+				//float3 deltaMax = c111 - curPt;
+	            
+				float3 delta = (curPt - c000) / (c111 - c000);
+
+				float4 d000 = tex3D(VolumeSampler, index000);
+				float4 d001 = tex3D(VolumeSampler, index001);
+				float4 d010 = tex3D(VolumeSampler, index010);
+				float4 d011 = tex3D(VolumeSampler, index011);
+				float4 d100 = tex3D(VolumeSampler, index100);
+				float4 d101 = tex3D(VolumeSampler, index101);
+				float4 d110 = tex3D(VolumeSampler, index110);
+				float4 d111 = tex3D(VolumeSampler, index111);
+				
+				// perform linear interpolation between:
+				//   d000 and d100 to find d00,
+				//   d001 and d101 to find d01,
+				//   d011 and d111 to find d11,
+				//   d010 and d110 to find d10.       
+
+				//float deltaXMin = (deltaMin.x / delta.x);
+				//float deltaXMax = (deltaMax.x / delta.x);
+
+				//float d00 = deltaXMax * d000 + deltaXMin * d100;
+				//float d01 = deltaXMax * d001 + deltaXMin * d101;
+				//float d11 = deltaXMax * d011 + deltaXMin * d111;
+				//float d10 = deltaXMax * d010 + deltaXMin * d110;            
+				float4 d00 = lerp(d000, d100, delta.x);
+				float4 d01 = lerp(d001, d101, delta.x);
+				float4 d11 = lerp(d011, d111, delta.x);
+				float4 d10 = lerp(d010, d110, delta.x);
+
+				// perform linear interpolation between:
+				//      d00 and d10 to find d0,
+				//      d01 and d11 to find d1. 
+
+				//float deltaYMin = (deltaMin.y / delta.y);
+				//float deltaYMax = (deltaMax.y / delta.y);
+
+				//float d0 = deltaYMax * d00 + deltaYMin * d10;
+				//float d1 = deltaYMax * d01 + deltaYMin * d11;
+				float4 d0 = lerp(d00, d10, delta.y);
+				float4 d1 = lerp(d01, d11, delta.y);
+
+				// perform linear interpolation between: 
+				//      d0 and d1 to find d
+
+				//float deltaZMin = (deltaMin.z / delta.z);
+				//float deltaZMax = (deltaMax.z / delta.z);
+	            
+				//float d = (deltaZMax * d0 + deltaZMin * d1);
+				float4 d = lerp(d0, d1, delta.z);
+
+				// (d.xyz contains the gradient normal of the current point)
+				// (d.w contains the density of the current point)
+
+				// If the density value exceeds the IsoValue, the ray intersects
+
+				if (d.z > IsoValue)
+				{
+					intersected = true;
+	                
+					// Get volume color from gradient
+					intersectData = d;
+
+					//normalize(n);
+				} else			
+					curDist += CastingStepSize;
+			}
+		}	
 	}
 	
-	return dist;
+	return intersected;
 }
 
 float4 VolumePixelShader(VertexShaderOutput input, float2 screenCoords : VPOS) : COLOR0
@@ -282,14 +327,13 @@ float4 VolumePixelShader(VertexShaderOutput input, float2 screenCoords : VPOS) :
     
     // Test ray intersection    
     
-    float dist = GetClosestIntersection(ray);
-    
-    float4 retColor = input.Color;
-    
-    if(dist < 0 || dist > 1000)
-		retColor = 0;
-
-    return retColor;
+    float4 intersectData = 0;
+    bool intersected = VolumeIntersection(ray, intersectData);		
+        
+    if(intersected)
+		return 1;
+	else 
+		return 0; //background color
 }
 
 technique Volume
