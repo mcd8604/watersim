@@ -12,7 +12,6 @@ float4x4 InvView;
 float4x4 InvProjection;
 
 float2 ScreenResolution;
-float3 CameraPosition;
 
 // Volume parameters
 
@@ -239,13 +238,8 @@ bool VolumeIntersection(Ray ray, out float4 intersectData)
 	                                    
 				// trilinear interpolation
 	            
-				//float3 c000 = volume.GridPoints[xIndex, yIndex, zIndex];
-				//float3 c111 = volume.GridPoints[xIndex + 1, yIndex + 1, zIndex + 1];
 				float3 c000 = MinBound + (GridCellSize * index000);
 				float3 c111 = c000 + GridCellSize;
-				//float3 delta = c111 - c000;
-				//float3 deltaMin = curPt - c000;
-				//float3 deltaMax = c111 - curPt;
 	            
 				float3 delta = (curPt - c000) / (c111 - c000);
 
@@ -257,44 +251,15 @@ bool VolumeIntersection(Ray ray, out float4 intersectData)
 				float4 d101 = tex3D(VolumeSampler, index101);
 				float4 d110 = tex3D(VolumeSampler, index110);
 				float4 d111 = tex3D(VolumeSampler, index111);
-				
-				// perform linear interpolation between:
-				//   d000 and d100 to find d00,
-				//   d001 and d101 to find d01,
-				//   d011 and d111 to find d11,
-				//   d010 and d110 to find d10.       
-
-				//float deltaXMin = (deltaMin.x / delta.x);
-				//float deltaXMax = (deltaMax.x / delta.x);
-
-				//float d00 = deltaXMax * d000 + deltaXMin * d100;
-				//float d01 = deltaXMax * d001 + deltaXMin * d101;
-				//float d11 = deltaXMax * d011 + deltaXMin * d111;
-				//float d10 = deltaXMax * d010 + deltaXMin * d110;            
+           
 				float4 d00 = lerp(d000, d100, delta.x);
 				float4 d01 = lerp(d001, d101, delta.x);
 				float4 d11 = lerp(d011, d111, delta.x);
 				float4 d10 = lerp(d010, d110, delta.x);
 
-				// perform linear interpolation between:
-				//      d00 and d10 to find d0,
-				//      d01 and d11 to find d1. 
-
-				//float deltaYMin = (deltaMin.y / delta.y);
-				//float deltaYMax = (deltaMax.y / delta.y);
-
-				//float d0 = deltaYMax * d00 + deltaYMin * d10;
-				//float d1 = deltaYMax * d01 + deltaYMin * d11;
 				float4 d0 = lerp(d00, d10, delta.y);
 				float4 d1 = lerp(d01, d11, delta.y);
-
-				// perform linear interpolation between: 
-				//      d0 and d1 to find d
-
-				//float deltaZMin = (deltaMin.z / delta.z);
-				//float deltaZMax = (deltaMax.z / delta.z);
-	            
-				//float d = (deltaZMax * d0 + deltaZMin * d1);
+				
 				float4 d = lerp(d0, d1, delta.z);
 
 				// (d.xyz contains the gradient normal of the current point)
@@ -305,11 +270,8 @@ bool VolumeIntersection(Ray ray, out float4 intersectData)
 				if (d.z > IsoValue)
 				{
 					intersected = true;
-	                
-					// Get volume color from gradient
+					//normalize(d);
 					intersectData = d;
-
-					//normalize(n);
 				} else			
 					curDist += CastingStepSize;
 			}
