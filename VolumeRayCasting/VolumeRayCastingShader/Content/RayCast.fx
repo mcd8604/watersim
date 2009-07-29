@@ -216,65 +216,64 @@ bool VolumeIntersection(Ray ray, out float4 intersectData)
         int xIndex = 0;
         int yIndex = 0;
         int zIndex = 0;	
+        
+        int i = 0;
 		
-		while(curDist < farDist) 
+		while(curDist < farDist && !intersected && ++i < 128) 
 		{
-			if(!intersected) 
+			curPt = ray.Origin + (ray.Direction * curDist);
+			
+			index.x = floor(((curPt.x - MinBound.x) / GridCellSize.x));
+			index.y = floor(((curPt.y - MinBound.y) / GridCellSize.y));
+			index.z = floor(((curPt.z - MinBound.z) / GridCellSize.z));
+            
+			float3 index000 = { xIndex, yIndex, zIndex };
+			float3 index001 = { xIndex, yIndex, zIndex + 1 };
+			float3 index010 = { xIndex, yIndex + 1, zIndex };
+			float3 index011 = { xIndex, yIndex + 1, zIndex + 1 };
+			float3 index100 = { xIndex + 1, yIndex, zIndex };
+			float3 index101 = { xIndex + 1, yIndex, zIndex + 1 };
+			float3 index110 = { xIndex + 1, yIndex + 1, zIndex };
+			float3 index111 = { xIndex + 1, yIndex + 1, zIndex + 1 };
+                                    
+			// trilinear interpolation
+            
+			float3 c000 = MinBound + (GridCellSize * index000);
+			float3 c111 = c000 + GridCellSize;
+            
+			float3 delta = (curPt - c000) / (c111 - c000);
+
+			float4 d000 = tex3D(VolumeSampler, index000);
+			float4 d001 = tex3D(VolumeSampler, index001);
+			float4 d010 = tex3D(VolumeSampler, index010);
+			float4 d011 = tex3D(VolumeSampler, index011);
+			float4 d100 = tex3D(VolumeSampler, index100);
+			float4 d101 = tex3D(VolumeSampler, index101);
+			float4 d110 = tex3D(VolumeSampler, index110);
+			float4 d111 = tex3D(VolumeSampler, index111);
+       
+			float4 d00 = lerp(d000, d100, delta.x);
+			float4 d01 = lerp(d001, d101, delta.x);
+			float4 d11 = lerp(d011, d111, delta.x);
+			float4 d10 = lerp(d010, d110, delta.x);
+
+			float4 d0 = lerp(d00, d10, delta.y);
+			float4 d1 = lerp(d01, d11, delta.y);
+			
+			float4 d = lerp(d0, d1, delta.z);
+
+			// (d.xyz contains the gradient normal of the current point)
+			// (d.w contains the density of the current point)
+
+			// If the density value exceeds the IsoValue, the ray intersects
+
+			if (d.z > IsoValue)
 			{
-				curPt = ray.Origin + (ray.Direction * curDist);
-				
-				index.x = floor(((curPt.x - MinBound.x) / GridCellSize.x));
-				index.y = floor(((curPt.y - MinBound.y) / GridCellSize.y));
-				index.z = floor(((curPt.z - MinBound.z) / GridCellSize.z));
-	            
-				float3 index000 = { xIndex, yIndex, zIndex };
-				float3 index001 = { xIndex, yIndex, zIndex + 1 };
-				float3 index010 = { xIndex, yIndex + 1, zIndex };
-				float3 index011 = { xIndex, yIndex + 1, zIndex + 1 };
-				float3 index100 = { xIndex + 1, yIndex, zIndex };
-				float3 index101 = { xIndex + 1, yIndex, zIndex + 1 };
-				float3 index110 = { xIndex + 1, yIndex + 1, zIndex };
-				float3 index111 = { xIndex + 1, yIndex + 1, zIndex + 1 };
-	                                    
-				// trilinear interpolation
-	            
-				float3 c000 = MinBound + (GridCellSize * index000);
-				float3 c111 = c000 + GridCellSize;
-	            
-				float3 delta = (curPt - c000) / (c111 - c000);
-
-				float4 d000 = tex3D(VolumeSampler, index000);
-				float4 d001 = tex3D(VolumeSampler, index001);
-				float4 d010 = tex3D(VolumeSampler, index010);
-				float4 d011 = tex3D(VolumeSampler, index011);
-				float4 d100 = tex3D(VolumeSampler, index100);
-				float4 d101 = tex3D(VolumeSampler, index101);
-				float4 d110 = tex3D(VolumeSampler, index110);
-				float4 d111 = tex3D(VolumeSampler, index111);
-           
-				float4 d00 = lerp(d000, d100, delta.x);
-				float4 d01 = lerp(d001, d101, delta.x);
-				float4 d11 = lerp(d011, d111, delta.x);
-				float4 d10 = lerp(d010, d110, delta.x);
-
-				float4 d0 = lerp(d00, d10, delta.y);
-				float4 d1 = lerp(d01, d11, delta.y);
-				
-				float4 d = lerp(d0, d1, delta.z);
-
-				// (d.xyz contains the gradient normal of the current point)
-				// (d.w contains the density of the current point)
-
-				// If the density value exceeds the IsoValue, the ray intersects
-
-				if (d.z > IsoValue)
-				{
-					intersected = true;
-					//normalize(d);
-					intersectData = d;
-				} else			
-					curDist += CastingStepSize;
-			}
+				intersected = true;
+				//normalize(d);
+				intersectData = d;
+			} else			
+				curDist += CastingStepSize;
 		}	
 	}
 	
